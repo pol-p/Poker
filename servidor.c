@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <mysql.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
@@ -18,33 +19,26 @@
 #define PASSWD "$usrMYSQL123"
 #define DATABASE "prueba"
 
+typedef struct {
+    int sock_conn;
+    char* cli_ip;
+    MYSQL* conn;
+} ClientThreadArgs;
+
 // Declaraciones de funciones
 void error(const char *msg);
-void handle_client(int sock_conn, char *cli_ip, MYSQL *conn);
+void* handle_client_thread(void* arg);
 int setup_server_socket();
 int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn);
 void setup_mysql(int *err, MYSQL **conn);
 void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *error);
 
 int main(int argc, char **argv) {
-    // Variables SOCKETS
-    int sock_listen, sock_conn; // Servidor
-    struct sockaddr_in cli_adr; // Estructura para la informacion del cliente
-    socklen_t cli_len = sizeof(cli_adr); // Longitud de la estructura
+    int sock_listen, sock_conn;
+    struct sockaddr_in cli_adr;
+    socklen_t cli_len = sizeof(cli_adr);
 
-    // Variables MYSQL
-    MYSQL *conn;
-    int err = 0;
-
-    // Configurar MySQL
-    setup_mysql(&err, &conn);
-    if (err < 0) {
-        fprintf(stderr, "Error al configurar MySQL. Codigo de error: %d\n", err);
-        return EXIT_FAILURE;
-    }
-    printf("[!] Conexion a MySQL existosa\n");
-
-    // Configurar el socket del servidor
+    // Configurar socket del servidor
     sock_listen = setup_server_socket();
     if (sock_listen < 0) {
         error("Error al configurar el socket del servidor");
@@ -57,14 +51,31 @@ int main(int argc, char **argv) {
         // Aceptar conexion del exterior
         sock_conn = accept(sock_listen, (struct sockaddr *) &cli_adr, &cli_len);
         if (sock_conn < 0) {
-            error("Error al aceptar la conexion con el socket");
+            error("Error al aceptar la conexión");
         }
 
-        // Obtener y mostrar la direccion IP del cliente
-        char *cli_ip = inet_ntoa(cli_adr.sin_addr);
+        // Copiar IP de forma segura con strdup
+        char *cli_ip = strdup(inet_ntoa(cli_adr.sin_addr));
         printf("[*] Cliente conectado desde: %s\n", cli_ip);
 
-        handle_client(sock_conn, cli_ip, conn); // Funcion para manejar al cliente
+        // Preparar parámetros para el hilo
+        ClientThreadArgs* args = malloc(sizeof(ClientThreadArgs));
+        args->sock_conn = sock_conn;
+        args->cli_ip = cli_ip;
+        args->conn = NULL;  // Cada hilo tendrá su propia conexión
+
+        // Crear hilo
+        pthread_t thread;
+        if (pthread_create(&thread, NULL, handle_client_thread, args) != 0) {
+            perror("Error al crear el hilo");
+            free(cli_ip);
+            free(args);
+            close(sock_conn);
+            continue;
+        }
+
+        // Liberar recursos del hilo automáticamente
+        pthread_detach(thread);
     }
 
     close(sock_listen);
@@ -104,33 +115,49 @@ int setup_server_socket() {
     return sock_listen;
 }
 
-void handle_client(int sock_conn, char *cli_ip, MYSQL *conn) {
+void* handle_client_thread(void* arg) {
+    ClientThreadArgs* args = (ClientThreadArgs*)arg;
+    MYSQL* conn;
+    int err = 0;
+
+    // Conexión MySQL independiente para este hilo
+    setup_mysql(&err, &conn);
+    if (err < 0) {
+        fprintf(stderr, "[!] Error en MySQL en el hilo\n");
+        close(args->sock_conn);
+        free(args->cli_ip);
+        free(args);
+        return NULL;
+    }
+
     char buff_in[MAX_BUFF];
     int ret;
 
     while (1) {
         // Leer datos del cliente
-        ret = read(sock_conn, buff_in, sizeof(buff_in) - 1);
+        ret = read(args->sock_conn, buff_in, sizeof(buff_in) - 1);
         if (ret < 0) {
             perror("Error al leer del socket");
             break;
         }
         if (ret == 0) {
-            printf("[-] Cliente cerro la conexion.\n");
+            printf("[-] Cliente cerró la conexión: %s\n", args->cli_ip);
             break;
         }
 
-        buff_in[ret] = '\0'; // Terminar el mensaje recibido
+        buff_in[ret] = '\0';
 
-        // Manejar la solicitud del cliente
-        if (handle_client_request(sock_conn, buff_in, conn)) {
-            break; // Salir del bucle si el cliente solicita salir
+        if (handle_client_request(args->sock_conn, buff_in, conn)) {
+            break;
         }
     }
 
-    // Cerrar el socket del cliente
-    close(sock_conn);
-    printf("[-] Conexion con el cliente: %s cerrada.\n", cli_ip);
+    // Limpieza final
+    close(args->sock_conn); //Cerrar conexion socket
+    mysql_close(conn); //Cerrar conexion MYSQL
+    free(args->cli_ip); //Liberar memoria 
+    free(args); //Liberar memoria
+    return NULL;
 }
 
 int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
