@@ -2,3 +2,51 @@
 *.dSYM
 servidor
 .DS_Store
+# .gitignore para proyectos C#
+
+### Entornos y Herramientas ###
+.vs/                 # Directorio de configuración de Visual Studio
+.vscode/             # Configuraciones de VS Code (opcional si lo usas)
+.idea/               # Configuración de JetBrains Rider (si se usa)
+
+### Build y Dependencias ###
+bin/                 # Binarios de compilación
+obj/                 # Objetos intermedios de compilación
+packages/            # Paquetes NuGet (se restauran automáticamente)
+
+### Archivos de Usuario ###
+*.user               # Configuraciones de usuario de Visual Studio
+*.suo                # Opciones de usuario de la solución (Visual Studio)
+*.userprefs          # Preferencias de usuario
+
+### Logs y Temporales ###
+*.log                # Archivos de log
+*.cache              # Cache de compilación
+[Tt]humbs.db         # Archivo de miniaturas de Windows
+*.pidb               # Base de datos de depuración de Mono
+*.ncrunchproject     # Configuración de NCrunch (si no se usa)
+
+### Sistema ###
+.DS_Store            # Configuraciones de macOS
+
+### Proyectos .NET ###
+# Excluir archivos generados automáticamente
+*.exe
+*.dll
+*.pdb
+*.xml                # Archivos de documentación generados
+
+# Excluir resultados de pruebas locales
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Excluir publicaciones de proyectos web
+pub/
+wwwroot/
+
+### Paquetes NuGet ###
+# Si usas Paket (opcional)
+paket-files/
+
+# Si usas proyectos .NET Core
+project.lock.json
