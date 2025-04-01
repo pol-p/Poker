@@ -35,6 +35,8 @@ Si quieres ser parte de este proyecto desde el principio, haz clic en el enlace 
 
 
 
+
+
 🎰 Póker Showdown - Versión 2 🃏
 
 Nos complace presentar la segunda versión de nuestro proyecto de póker, en la que hemos incorporado importantes mejoras y nuevas características para enriquecer la experiencia de juego. ✨
@@ -62,6 +64,5 @@ Sabemos que aún queda trabajo por hacer. Uno de nuestros principales objetivos 
 
 🎊 ¡Gracias por acompañarnos en este camino! Seguimos mejorando para ofrecer lo mejor. 🏆🔥
 
-🔗 Mira el video de la versión uno aquí: https://youtu.be/lIMaUK372HM 🔗
 
-🔗 Mira el video de la versión dos aquí:  https://youtu.be/lIMaUK372HM 🔗
+🔗 Mira el video de la versión dos aquí:  https://www.youtube.com/watch?v=n_oaMY6cOro 🔗
