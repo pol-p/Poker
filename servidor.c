@@ -17,7 +17,7 @@
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
-#define DATABASE "prueba"
+#define DATABASE "PokerDB"
 
 typedef struct {
     int sock_conn;
@@ -32,11 +32,15 @@ int setup_server_socket();
 int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn);
 void setup_mysql(int *err, MYSQL **conn);
 void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *error);
+void sigint_handler(int sig);
 
 int main(int argc, char **argv) {
     int sock_listen, sock_conn;
     struct sockaddr_in cli_adr;
     socklen_t cli_len = sizeof(cli_adr);
+    
+    //CTRL C = EXIT
+    signal(SIGINT, sigint_handler);
 
     // Configurar socket del servidor
     sock_listen = setup_server_socket();
@@ -179,7 +183,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
             salir = 1; // Indicar que se debe salir
             break;
         case 1:
-            ejecutar_consulta(conn, "SELECT id FROM jugadores", consulta, &err);
+            ejecutar_consulta(conn, "SELECT * FROM jugadores", consulta, &err);
             printf("%s\n", consulta);
             snprintf(buff_out, sizeof(buff_out), "%s\n", consulta);
             break;
@@ -270,4 +274,9 @@ void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *err
     mysql_free_result(resultado);
 
     *error = 0; // Indicar que no hubo errores
+}
+
+void sigint_handler(int sig) {
+    printf("\n[-]Servidor terminado\n");
+    exit(EXIT_SUCCESS);
 }
