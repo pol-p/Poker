@@ -1,3 +1,4 @@
 .vs*
 *.dSYM
 servidor
+.DS_Store

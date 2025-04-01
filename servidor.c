@@ -10,14 +10,15 @@
 #include <mysql.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <string.h>
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9001
+#define PORT 9002
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
-#define DATABASE "PokerDB"
+#define DATABASE "Poker"
 
 typedef struct {
     int sock_conn;
@@ -38,7 +39,6 @@ int main(int argc, char **argv) {
     int sock_listen, sock_conn;
     struct sockaddr_in cli_adr;
     socklen_t cli_len = sizeof(cli_adr);
-    
     //CTRL C = EXIT
     signal(SIGINT, sigint_handler);
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     // Bucle infinito para aceptar conexiones
     for (;;) {
         // Aceptar conexion del exterior
-        sock_conn = accept(sock_listen, (struct sockaddr *) &cli_adr, &cli_len);
+        sock_conn = accept(sock_listen, (struct sockaddr *) &cli_adr, &cli_len); //Ultimo mostrar ip del cliente
         if (sock_conn < 0) {
             error("Error al aceptar la conexión");
         }
@@ -171,6 +171,9 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
     int salir = 0;
     char consulta[MAX_SIZE];
     int err = 0;
+    char name[20];
+    char email[50];
+    char passwd[25];
     // Extraer el token del mensaje
     token = strtok(buff_in, "/");
     modo = atoi(token);
@@ -182,10 +185,54 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
             snprintf(buff_out, sizeof(buff_out), "Saliendo...\n");
             salir = 1; // Indicar que se debe salir
             break;
+        
         case 1:
-            ejecutar_consulta(conn, "SELECT * FROM jugadores", consulta, &err);
-            printf("%s\n", consulta);
-            snprintf(buff_out, sizeof(buff_out), "%s\n", consulta);
+            //char name[20];
+            //char email[40];
+            //char passwd[20];
+            token = strtok(NULL, "/");
+            strcpy(name, token);
+            token = strtok(NULL, "/");
+            strcpy(email, token);
+            token = strtok(NULL, "/");
+            strcpy(passwd, token);
+            char buff_cons [MAX_BUFF];
+            //consulta a hacer
+            snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores WHERE nombre = '%s'", name);
+            ejecutar_consulta(conn, buff_cons, consulta, &err);
+            if (strlen(consulta) > 0){
+                snprintf(buff_out, sizeof(buff_out), "%s\n", "ERROR: el usuario ya existe");
+            }
+            else{
+                snprintf(buff_cons, MAX_BUFF, "INSERT INTO Jugadores (nombre, email, saldo, passwd) VALUES ('%s', '%s', %f, '%s');", name, email, 5.00, passwd);
+                if (mysql_query(conn, buff_cons)){ 
+                    printf("Error al insertar nuevo usuario: %s\n", mysql_error(conn));
+                    strcpy(buff_out, "ERROR: el usuario no se a podido crear con exito");
+                }
+                else{
+                    strcpy(buff_out, "[*] Usuario creado con exito");
+                }
+            }
+
+            //printf("%s\n", consulta); Para Debugar el Codigo
+            break;
+
+            case(2):
+                token = strtok(NULL, "/");
+                strcpy(name, token);
+                token = strtok(NULL, "/");
+                strcpy(passwd, token);
+                //consulta a hacer
+                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores WHERE nombre = '%s' and passwd = '%s'", name, passwd);
+                ejecutar_consulta(conn, buff_cons, consulta, &err);
+
+                if (strlen(consulta) > 0){
+                    strcpy(buff_out, "[*] Login con exito");
+                }
+                else{
+                    strcpy(buff_out, "ERROR: Contraseña o usuario incorrecto");
+                }
+
             break;
         //FUTUROS MODOS ...(!)
         default:
