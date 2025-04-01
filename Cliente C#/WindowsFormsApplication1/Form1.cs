@@ -30,7 +30,7 @@ namespace WindowsFormsApplication1
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
             IPAddress direc = IPAddress.Parse(IP.Text);
-            IPEndPoint ipep = new IPEndPoint(direc, 9002);
+            IPEndPoint ipep = new IPEndPoint(direc, 9004);
             
 
             //Creamos el socket 
@@ -110,6 +110,36 @@ namespace WindowsFormsApplication1
         private void label4_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void Users_Click(object sender, EventArgs e)
+        {
+            //enviar
+            string mensaje = "3/"; // LISTA USUARIOS
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
+            //respuesta
+            byte[] msg2 = new byte[512];
+            int bytesRecibidos = server.Receive(msg2);
+            string respuesta = Encoding.ASCII.GetString(msg2, 0, bytesRecibidos).Trim('\0');  // Limpiar la respuesta
+
+            MessageBox.Show(respuesta);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            //enviar
+            string mensaje = "4/"; // TOP 1
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
+            //respuesta
+            byte[] msg2 = new byte[512];
+            int bytesRecibidos = server.Receive(msg2);
+            string respuesta = Encoding.ASCII.GetString(msg2, 0, bytesRecibidos).Trim('\0');  // Limpiar la respuesta
+
+            MessageBox.Show(respuesta);
         }
     }
 }

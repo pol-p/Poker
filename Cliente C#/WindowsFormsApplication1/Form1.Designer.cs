@@ -40,6 +40,8 @@
             this.email = new System.Windows.Forms.TextBox();
             this.contraseña = new System.Windows.Forms.TextBox();
             this.Desconectar = new System.Windows.Forms.Button();
+            this.Users = new System.Windows.Forms.Button();
+            this.Top1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -159,11 +161,33 @@
             this.Desconectar.UseVisualStyleBackColor = true;
             this.Desconectar.Click += new System.EventHandler(this.Desconectar_Click);
             // 
+            // Users
+            // 
+            this.Users.Location = new System.Drawing.Point(55, 439);
+            this.Users.Name = "Users";
+            this.Users.Size = new System.Drawing.Size(61, 33);
+            this.Users.TabIndex = 14;
+            this.Users.Text = "USERS";
+            this.Users.UseVisualStyleBackColor = true;
+            this.Users.Click += new System.EventHandler(this.Users_Click);
+            // 
+            // Top1
+            // 
+            this.Top1.Location = new System.Drawing.Point(164, 439);
+            this.Top1.Name = "Top1";
+            this.Top1.Size = new System.Drawing.Size(56, 33);
+            this.Top1.TabIndex = 15;
+            this.Top1.Text = "TOP1";
+            this.Top1.UseVisualStyleBackColor = true;
+            this.Top1.Click += new System.EventHandler(this.button2_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(741, 562);
+            this.Controls.Add(this.Top1);
+            this.Controls.Add(this.Users);
             this.Controls.Add(this.Desconectar);
             this.Controls.Add(this.contraseña);
             this.Controls.Add(this.email);
@@ -198,6 +222,8 @@
         private System.Windows.Forms.TextBox email;
         private System.Windows.Forms.TextBox contraseña;
         private System.Windows.Forms.Button Desconectar;
+        private System.Windows.Forms.Button Users;
+        private System.Windows.Forms.Button Top1;
     }
 }
 
