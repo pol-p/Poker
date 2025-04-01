@@ -14,7 +14,7 @@
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9002
+#define PORT 9004
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
@@ -25,6 +25,8 @@ typedef struct {
     char* cli_ip;
     MYSQL* conn;
 } ClientThreadArgs;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Declaraciones de funciones
 void error(const char *msg);
@@ -187,19 +189,34 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
             break;
         
         case 1:
-            //char name[20];
-            //char email[40];
-            //char passwd[20];
+
             token = strtok(NULL, "/");
+            if(token == NULL) {
+                strcpy(buff_out, "Introduce el nombre");
+                break;
+            }
             strcpy(name, token);
+
             token = strtok(NULL, "/");
+            if(token == NULL) {
+                strcpy(buff_out, "Introduce el email");
+                break;
+            }
             strcpy(email, token);
+
             token = strtok(NULL, "/");
+            if(token == NULL) {
+                strcpy(buff_out, "Introduce la Password");
+                break;
+            }
             strcpy(passwd, token);
+
             char buff_cons [MAX_BUFF];
+
             //consulta a hacer
             snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores WHERE nombre = '%s'", name);
             ejecutar_consulta(conn, buff_cons, consulta, &err);
+
             if (strlen(consulta) > 0){
                 snprintf(buff_out, sizeof(buff_out), "%s\n", "ERROR: el usuario ya existe");
             }
@@ -218,10 +235,20 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
             break;
 
             case(2):
-                token = strtok(NULL, "/");
-                strcpy(name, token);
-                token = strtok(NULL, "/");
-                strcpy(passwd, token);
+            token = strtok(NULL, "/");
+            if(token == NULL) {
+                strcpy(buff_out, "Introduce el nombre");
+                break;
+            }
+            strcpy(name, token);
+
+            token = strtok(NULL, "/");
+            if(token == NULL) {
+                strcpy(buff_out, "Introduce la Password");
+                break;
+            }
+            strcpy(passwd, token);
+
                 //consulta a hacer
                 snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores WHERE nombre = '%s' and passwd = '%s'", name, passwd);
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
@@ -231,6 +258,34 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
                 }
                 else{
                     strcpy(buff_out, "ERROR: Contraseña o usuario incorrecto");
+                }
+
+            break;
+
+            case(3):
+                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores");
+                ejecutar_consulta(conn, buff_cons, consulta, &err);
+
+                if (strlen(consulta) > 0){
+                    snprintf(buff_cons, MAX_BUFF, "Usuarios: %s ", consulta);
+                    strcpy(buff_out, buff_cons);
+                }
+                else{
+                    strcpy(buff_out, "ERROR: No hay Usuarios");
+                }
+
+            break;
+
+            case(4):
+                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores ORDER BY saldo DESC LIMIT 1");
+                ejecutar_consulta(conn, buff_cons, consulta, &err);
+
+                if (strlen(consulta) > 0){
+                    snprintf(buff_cons, MAX_BUFF, "El Top1 es: %s ", consulta);
+                    strcpy(buff_out, buff_cons);
+                }
+                else{
+                    strcpy(buff_out, "ERROR: No hay Usuarios");
                 }
 
             break;
