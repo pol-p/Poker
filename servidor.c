@@ -14,28 +14,36 @@
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9004
+#define PORT 9000
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
 #define DATABASE "Poker"
+#define MAX_CLIENTS 100
 
 typedef struct {
     int sock_conn;
     char* cli_ip;
     MYSQL* conn;
-} ClientThreadArgs;
+    char name[20];
+} ClientInfo;
 
+ClientInfo* connected_clients[MAX_CLIENTS] = {NULL};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Declaraciones de funciones
 void error(const char *msg);
 void* handle_client_thread(void* arg);
 int setup_server_socket();
-int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn);
+int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo *cliente);
 void setup_mysql(int *err, MYSQL **conn);
 void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *error);
 void sigint_handler(int sig);
+ClientInfo* add_client(int sock, char* ip);
+void remove_client(int sock);
+void set_client_name(ClientInfo* client, const char* name);
+void generar_lista_conectados(char *salida);
+void enviar_info_jugadores_en_linea();
 
 int main(int argc, char **argv) {
     int sock_listen, sock_conn;
@@ -60,22 +68,20 @@ int main(int argc, char **argv) {
             error("Error al aceptar la conexión");
         }
 
-        // Copiar IP de forma segura con strdup
-        char *cli_ip = strdup(inet_ntoa(cli_adr.sin_addr));
-        printf("[*] Cliente conectado desde: %s\n", cli_ip);
-
         // Preparar parámetros para el hilo
-        ClientThreadArgs* args = malloc(sizeof(ClientThreadArgs));
-        args->sock_conn = sock_conn;
-        args->cli_ip = cli_ip;
-        args->conn = NULL;  // Cada hilo tendrá su propia conexión
+        ClientInfo *client = add_client(sock_conn, inet_ntoa(cli_adr.sin_addr));
+        if (client == NULL) {
+            fprintf(stderr, "Lista de clientes llena o error al agregar cliente.\n");
+            close(sock_conn);
+            continue;
+        }
+        printf("[*] Cliente conectado desde: %s\n", client->cli_ip);
 
-        // Crear hilo
+        // Crear hilo pasando el puntero 'client'
         pthread_t thread;
-        if (pthread_create(&thread, NULL, handle_client_thread, args) != 0) {
+        if (pthread_create(&thread, NULL, handle_client_thread, client) != 0) {
             perror("Error al crear el hilo");
-            free(cli_ip);
-            free(args);
+            remove_client(sock_conn);  // Elimina el cliente si falla la creación del hilo
             close(sock_conn);
             continue;
         }
@@ -122,7 +128,7 @@ int setup_server_socket() {
 }
 
 void* handle_client_thread(void* arg) {
-    ClientThreadArgs* args = (ClientThreadArgs*)arg;
+    ClientInfo* client = (ClientInfo*)arg;
     MYSQL* conn;
     int err = 0;
 
@@ -130,9 +136,9 @@ void* handle_client_thread(void* arg) {
     setup_mysql(&err, &conn);
     if (err < 0) {
         fprintf(stderr, "[!] Error en MySQL en el hilo\n");
-        close(args->sock_conn);
-        free(args->cli_ip);
-        free(args);
+        close(client->sock_conn);
+        free(client->cli_ip);
+        free(client);
         return NULL;
     }
 
@@ -141,32 +147,38 @@ void* handle_client_thread(void* arg) {
 
     while (1) {
         // Leer datos del cliente
-        ret = read(args->sock_conn, buff_in, sizeof(buff_in) - 1);
+        ret = read(client->sock_conn, buff_in, sizeof(buff_in) - 1);
         if (ret < 0) {
             perror("Error al leer del socket");
             break;
         }
         if (ret == 0) {
-            printf("[-] Cliente cerró la conexión: %s\n", args->cli_ip);
+            printf("[-] Cliente cerró la conexión: %s\n", client->cli_ip);
             break;
         }
 
         buff_in[ret] = '\0';
 
-        if (handle_client_request(args->sock_conn, buff_in, conn)) {
+        if (handle_client_request(client->sock_conn, buff_in, conn, client)) {
             break;
         }
     }
 
     // Limpieza final
-    close(args->sock_conn); //Cerrar conexion socket
-    mysql_close(conn); //Cerrar conexion MYSQL
-    free(args->cli_ip); //Liberar memoria 
-    free(args); //Liberar memoria
+    // Antes de liberar recursos, removemos al cliente
+    remove_client(client->sock_conn);
+
+    // Ahora enviamos la lista actualizada a los demás clientes
+    enviar_info_jugadores_en_linea();
+
+    // Finalmente, liberamos los recursos
+    mysql_close(conn);
+    close(client->sock_conn);
+    
     return NULL;
 }
 
-int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
+int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo *client) {
     int modo;
     char *token;
     char buff_out[100];
@@ -176,6 +188,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
     char name[20];
     char email[50];
     char passwd[25];
+    char lista_conectados[MAX_BUFF];
     // Extraer el token del mensaje
     token = strtok(buff_in, "/");
     modo = atoi(token);
@@ -183,7 +196,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
     // Modos posibles que recibe en el mensaje del cliente
     switch (modo) {
         case 0:
-            printf("Cliente solicito salir.\n");
+            printf("Cliente con ip %s solicito salir.\n", client->cli_ip);
             snprintf(buff_out, sizeof(buff_out), "Saliendo...\n");
             salir = 1; // Indicar que se debe salir
             break;
@@ -255,6 +268,8 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
 
                 if (strlen(consulta) > 0){
                     strcpy(buff_out, "[*] Login con exito");
+                    set_client_name(client, name);
+                    enviar_info_jugadores_en_linea();
                 }
                 else{
                     strcpy(buff_out, "ERROR: Contraseña o usuario incorrecto");
@@ -288,6 +303,13 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn) {
                     strcpy(buff_out, "ERROR: No hay Usuarios");
                 }
 
+            break;
+
+            case(5):
+                generar_lista_conectados(lista_conectados);
+                snprintf(buff_cons, MAX_BUFF, "La lista es: %s ", lista_conectados);
+                strcpy(buff_out, buff_cons);
+                //printf("%s", buff_out);
             break;
         //FUTUROS MODOS ...(!)
         default:
@@ -379,6 +401,100 @@ void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *err
 }
 
 void sigint_handler(int sig) {
-    printf("\n[-]Servidor terminado\n");
+    printf("\n[!] Cerrando servidor...\n");
+
+    // Cerrar todas las conexiones con los clientes
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (connected_clients[i] != NULL) {
+            close(connected_clients[i]->sock_conn);
+            free(connected_clients[i]->cli_ip);
+            free(connected_clients[i]);
+            connected_clients[i] = NULL;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+
+    printf("[!] Recursos liberados correctamente. Saliendo...\n");
     exit(EXIT_SUCCESS);
 }
+
+// Función para agregar cliente al primer slot disponible
+ClientInfo* add_client(int sock, char* ip) {
+    pthread_mutex_lock(&mutex);
+    
+    int i;
+    for (i = 0; i < MAX_CLIENTS; i++) {
+        if (connected_clients[i] == NULL) {
+            ClientInfo* new_client = malloc(sizeof(ClientInfo));
+            if (!new_client) {
+                pthread_mutex_unlock(&mutex);
+                return NULL;
+            }
+            
+            new_client->sock_conn = sock;
+            new_client->cli_ip = strdup(ip);
+            new_client->conn = NULL;
+            new_client->name[0] = '\0';
+            connected_clients[i] = new_client;
+            pthread_mutex_unlock(&mutex);
+            return new_client;
+        }
+    }
+    
+    pthread_mutex_unlock(&mutex);
+    return NULL;  // Array lleno
+}
+
+void remove_client(int sock) {
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (connected_clients[i] && connected_clients[i]->sock_conn == sock) {
+            free(connected_clients[i]->cli_ip);
+            free(connected_clients[i]);
+            connected_clients[i] = NULL;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+void set_client_name(ClientInfo* client, const char* name) {
+    if (client && name) {
+        strncpy(client->name, name, sizeof(client->name) - 1);
+        client->name[sizeof(client->name) - 1] = '\0'; // Asegurar null-termination
+    }
+}
+
+void generar_lista_conectados(char *salida) {
+    pthread_mutex_lock(&mutex); // Bloquear el acceso global
+    
+    salida[0] = '\0'; // vaciar string
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (connected_clients[i] != NULL && connected_clients[i]->name[0] != '\0') {
+            if (strlen(salida) > 0) {
+                strncat(salida, ",", MAX_BUFF - strlen(salida) - 1);
+            }
+            strncat(salida, connected_clients[i]->name, MAX_BUFF - strlen(salida) - 1);
+        }
+    }
+    pthread_mutex_unlock(&mutex); // Liberar el mutex
+}
+
+void enviar_info_jugadores_en_linea() {
+    char lista[MAX_BUFF];
+    generar_lista_conectados(lista);
+
+    // Bloquea el mutex para asegurarnos de que el vector no se modifique mientras iteramos
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (connected_clients[i] != NULL) {
+            if (write(connected_clients[i]->sock_conn, lista, strlen(lista)) < 0) {
+                perror("Error al enviar info a cliente");
+            }
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+
