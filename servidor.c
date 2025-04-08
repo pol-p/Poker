@@ -10,16 +10,15 @@
 #include <mysql.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-#include <string.h>
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9000
+#define PORT 9001
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
 #define DATABASE "Poker"
-#define MAX_CLIENTS 100
+//#define MAX_CLIENTS 100
 
 typedef struct {
     int sock_conn;
@@ -28,7 +27,13 @@ typedef struct {
     char name[20];
 } ClientInfo;
 
-ClientInfo* connected_clients[MAX_CLIENTS] = {NULL};
+typedef struct {
+    ClientInfo** clients;  // Array de punteros
+    int capacity;         // Capacidad total
+    int count;            // Clientes activos
+} DynamicClientArray;
+
+DynamicClientArray connected_clients = {NULL, 0, 0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Declaraciones de funciones
@@ -44,15 +49,17 @@ void remove_client(int sock);
 void set_client_name(ClientInfo* client, const char* name);
 void generar_lista_conectados(char *salida);
 void enviar_info_jugadores_en_linea();
+void compact_client_array();
+void init_client_array();
 
 int main(int argc, char **argv) {
     int sock_listen, sock_conn;
     struct sockaddr_in cli_adr;
     socklen_t cli_len = sizeof(cli_adr);
-    //CTRL C = EXIT
+    
     signal(SIGINT, sigint_handler);
+    init_client_array();  // Inicializar el array dinámico
 
-    // Configurar socket del servidor
     sock_listen = setup_server_socket();
     if (sock_listen < 0) {
         error("Error al configurar el socket del servidor");
@@ -60,39 +67,34 @@ int main(int argc, char **argv) {
 
     printf("[!] Servidor escuchando en el puerto %d...\n", PORT);
 
-    // Bucle infinito para aceptar conexiones
     for (;;) {
-        // Aceptar conexion del exterior
-        sock_conn = accept(sock_listen, (struct sockaddr *) &cli_adr, &cli_len); //Ultimo mostrar ip del cliente
+        sock_conn = accept(sock_listen, (struct sockaddr *) &cli_adr, &cli_len);
         if (sock_conn < 0) {
             error("Error al aceptar la conexión");
         }
 
-        // Preparar parámetros para el hilo
         ClientInfo *client = add_client(sock_conn, inet_ntoa(cli_adr.sin_addr));
         if (client == NULL) {
-            fprintf(stderr, "Lista de clientes llena o error al agregar cliente.\n");
+            fprintf(stderr, "Error al agregar cliente.\n");
             close(sock_conn);
             continue;
         }
         printf("[*] Cliente conectado desde: %s\n", client->cli_ip);
 
-        // Crear hilo pasando el puntero 'client'
         pthread_t thread;
         if (pthread_create(&thread, NULL, handle_client_thread, client) != 0) {
             perror("Error al crear el hilo");
-            remove_client(sock_conn);  // Elimina el cliente si falla la creación del hilo
+            remove_client(sock_conn);
             close(sock_conn);
             continue;
         }
-
-        // Liberar recursos del hilo automáticamente
         pthread_detach(thread);
     }
 
     close(sock_listen);
     return 0;
 }
+
 
 void error(const char *msg) {
     perror(msg);
@@ -136,9 +138,10 @@ void* handle_client_thread(void* arg) {
     setup_mysql(&err, &conn);
     if (err < 0) {
         fprintf(stderr, "[!] Error en MySQL en el hilo\n");
+        remove_client(client->sock_conn);
+        enviar_info_jugadores_en_linea();
+        mysql_close(conn);
         close(client->sock_conn);
-        free(client->cli_ip);
-        free(client);
         return NULL;
     }
 
@@ -403,16 +406,18 @@ void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *err
 void sigint_handler(int sig) {
     printf("\n[!] Cerrando servidor...\n");
 
-    // Cerrar todas las conexiones con los clientes
     pthread_mutex_lock(&mutex);
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (connected_clients[i] != NULL) {
-            close(connected_clients[i]->sock_conn);
-            free(connected_clients[i]->cli_ip);
-            free(connected_clients[i]);
-            connected_clients[i] = NULL;
+    for (int i = 0; i < connected_clients.count; i++) {
+        if (connected_clients.clients[i] != NULL) {
+            close(connected_clients.clients[i]->sock_conn);
+            free(connected_clients.clients[i]->cli_ip);
+            free(connected_clients.clients[i]);
         }
     }
+    free(connected_clients.clients);
+    connected_clients.clients = NULL;
+    connected_clients.capacity = 0;
+    connected_clients.count = 0;
     pthread_mutex_unlock(&mutex);
 
     printf("[!] Recursos liberados correctamente. Saliendo...\n");
@@ -423,41 +428,86 @@ void sigint_handler(int sig) {
 ClientInfo* add_client(int sock, char* ip) {
     pthread_mutex_lock(&mutex);
     
-    int i;
-    for (i = 0; i < MAX_CLIENTS; i++) {
-        if (connected_clients[i] == NULL) {
-            ClientInfo* new_client = malloc(sizeof(ClientInfo));
-            if (!new_client) {
-                pthread_mutex_unlock(&mutex);
-                return NULL;
-            }
-            
-            new_client->sock_conn = sock;
-            new_client->cli_ip = strdup(ip);
-            new_client->conn = NULL;
-            new_client->name[0] = '\0';
-            connected_clients[i] = new_client;
+    // Redimensionar si es necesario
+    if (connected_clients.count >= connected_clients.capacity) {
+        int new_capacity = connected_clients.capacity == 0 ? 10 : connected_clients.capacity * 2;
+        ClientInfo** new_array = (ClientInfo**)realloc(connected_clients.clients, new_capacity * sizeof(ClientInfo*));
+        if (!new_array) {
             pthread_mutex_unlock(&mutex);
-            return new_client;
+            return NULL;
         }
+        //INICIALIZAR nuevis huecos con nulls para borrar posible basura 
+        for (int i = connected_clients.capacity; i < new_capacity; i++) {
+            new_array[i] = NULL;
+        }
+        connected_clients.clients = new_array;
+        connected_clients.capacity = new_capacity;
+    }
+
+    // Crear nuevo cliente al final
+    ClientInfo* new_client = (ClientInfo*)malloc(sizeof(ClientInfo));
+    if (!new_client) {
+        pthread_mutex_unlock(&mutex);
+        return NULL;
     }
     
+    new_client->sock_conn = sock;
+    new_client->cli_ip = strdup(ip);
+    new_client->conn = NULL;
+    new_client->name[0] = '\0';
+    
+    connected_clients.clients[connected_clients.count] = new_client;
+    connected_clients.count++;
+    
     pthread_mutex_unlock(&mutex);
-    return NULL;  // Array lleno
+    return new_client;
 }
 
 void remove_client(int sock) {
     pthread_mutex_lock(&mutex);
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (connected_clients[i] && connected_clients[i]->sock_conn == sock) {
-            free(connected_clients[i]->cli_ip);
-            free(connected_clients[i]);
-            connected_clients[i] = NULL;
+    
+    for (int i = 0; i < connected_clients.count; i++) {
+        if (connected_clients.clients[i] && connected_clients.clients[i]->sock_conn == sock) {
+            free(connected_clients.clients[i]->cli_ip);
+            free(connected_clients.clients[i]);
+            
+            // Mover el último cliente a esta posición
+            if (i != connected_clients.count - 1) {
+                connected_clients.clients[i] = connected_clients.clients[connected_clients.count - 1];
+            }
+            connected_clients.clients[connected_clients.count - 1] = NULL;
+            connected_clients.count--;
+            
             break;
+        }
+    }
+    
+    static int remove_counter = 0;
+    remove_counter++; 
+    if (remove_counter >= 10) {
+        compact_client_array();
+        remove_counter = 0;
+    }
+    
+    pthread_mutex_unlock(&mutex);
+}
+
+// Modificar las funciones que usan el array
+void generar_lista_conectados(char *salida) {
+    pthread_mutex_lock(&mutex);
+    salida[0] = '\0';
+    
+    for (int i = 0; i < connected_clients.count; i++) {
+        if (connected_clients.clients[i] != NULL && connected_clients.clients[i]->name[0] != '\0') {
+            if (strlen(salida) > 0) {
+                strncat(salida, ",", MAX_BUFF - strlen(salida) - 1);
+            }
+            strncat(salida, connected_clients.clients[i]->name, MAX_BUFF - strlen(salida) - 1);
         }
     }
     pthread_mutex_unlock(&mutex);
 }
+
 
 void set_client_name(ClientInfo* client, const char* name) {
     if (client && name) {
@@ -466,30 +516,14 @@ void set_client_name(ClientInfo* client, const char* name) {
     }
 }
 
-void generar_lista_conectados(char *salida) {
-    pthread_mutex_lock(&mutex); // Bloquear el acceso global
-    
-    salida[0] = '\0'; // vaciar string
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (connected_clients[i] != NULL && connected_clients[i]->name[0] != '\0') {
-            if (strlen(salida) > 0) {
-                strncat(salida, ",", MAX_BUFF - strlen(salida) - 1);
-            }
-            strncat(salida, connected_clients[i]->name, MAX_BUFF - strlen(salida) - 1);
-        }
-    }
-    pthread_mutex_unlock(&mutex); // Liberar el mutex
-}
-
 void enviar_info_jugadores_en_linea() {
     char lista[MAX_BUFF];
     generar_lista_conectados(lista);
 
-    // Bloquea el mutex para asegurarnos de que el vector no se modifique mientras iteramos
     pthread_mutex_lock(&mutex);
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (connected_clients[i] != NULL) {
-            if (write(connected_clients[i]->sock_conn, lista, strlen(lista)) < 0) {
+    for (int i = 0; i < connected_clients.count; i++) {
+        if (connected_clients.clients[i] != NULL) {
+            if (write(connected_clients.clients[i]->sock_conn, lista, strlen(lista)) < 0) {
                 perror("Error al enviar info a cliente");
             }
         }
@@ -497,4 +531,39 @@ void enviar_info_jugadores_en_linea() {
     pthread_mutex_unlock(&mutex);
 }
 
+void init_client_array() {
+    pthread_mutex_lock(&mutex);
+    connected_clients.capacity = 10;
+    connected_clients.count = 0;
+    connected_clients.clients = (ClientInfo**)malloc(connected_clients.capacity * sizeof(ClientInfo*));
+    memset(connected_clients.clients, 0, connected_clients.capacity * sizeof(ClientInfo*));
+    pthread_mutex_unlock(&mutex);
+}
 
+void compact_client_array() {
+    pthread_mutex_lock(&mutex);
+    int new_count = 0;
+    
+    // Compactar los elementos al inicio
+    for (int i = 0; i < connected_clients.capacity; i++) {
+        if (connected_clients.clients[i] != NULL) {
+            if (i != new_count) {
+                connected_clients.clients[new_count] = connected_clients.clients[i];
+                connected_clients.clients[i] = NULL;
+            }
+            new_count++;
+        }
+    }
+    connected_clients.count = new_count;
+
+    // Reducir capacidad si hay mucha memoria libre
+    if (connected_clients.capacity > 10 && connected_clients.count < connected_clients.capacity / 2) {
+        int new_capacity = connected_clients.capacity / 2;
+        ClientInfo** new_array = (ClientInfo**)realloc(connected_clients.clients, new_capacity * sizeof(ClientInfo*));
+        if (new_array) {
+            connected_clients.clients = new_array;
+            connected_clients.capacity = new_capacity;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+}
