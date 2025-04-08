@@ -13,7 +13,7 @@
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9001
+#define PORT 9000
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
@@ -200,7 +200,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
     switch (modo) {
         case 0:
             printf("Cliente con ip %s solicito salir.\n", client->cli_ip);
-            snprintf(buff_out, sizeof(buff_out), "Saliendo...\n");
+            snprintf(buff_out, sizeof(buff_out), "0/Saliendo...\n");
             salir = 1; // Indicar que se debe salir
             break;
         
@@ -234,16 +234,16 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             ejecutar_consulta(conn, buff_cons, consulta, &err);
 
             if (strlen(consulta) > 0){
-                snprintf(buff_out, sizeof(buff_out), "%s\n", "ERROR: el usuario ya existe");
+                snprintf(buff_out, sizeof(buff_out), "%s\n", "1/ERROR: el usuario ya existe");
             }
             else{
                 snprintf(buff_cons, MAX_BUFF, "INSERT INTO Jugadores (nombre, email, saldo, passwd) VALUES ('%s', '%s', %f, '%s');", name, email, 5.00, passwd);
                 if (mysql_query(conn, buff_cons)){ 
                     printf("Error al insertar nuevo usuario: %s\n", mysql_error(conn));
-                    strcpy(buff_out, "ERROR: el usuario no se a podido crear con exito");
+                    strcpy(buff_out, "1/ERROR: el usuario no se a podido crear con exito");
                 }
                 else{
-                    strcpy(buff_out, "[*] Usuario creado con exito");
+                    strcpy(buff_out, "1/[*] Usuario creado con exito");
                 }
             }
 
@@ -270,12 +270,12 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
 
                 if (strlen(consulta) > 0){
-                    strcpy(buff_out, "[*] Login con exito");
+                    strcpy(buff_out, "2/[*] Login con exito");
                     set_client_name(client, name);
                     enviar_info_jugadores_en_linea();
                 }
                 else{
-                    strcpy(buff_out, "ERROR: Contraseña o usuario incorrecto");
+                    strcpy(buff_out, "2/ERROR: Contraseña o usuario incorrecto");
                 }
 
             break;
@@ -285,11 +285,11 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
 
                 if (strlen(consulta) > 0){
-                    snprintf(buff_cons, MAX_BUFF, "Usuarios: %s ", consulta);
+                    snprintf(buff_cons, MAX_BUFF, "3/Usuarios: %s ", consulta);
                     strcpy(buff_out, buff_cons);
                 }
                 else{
-                    strcpy(buff_out, "ERROR: No hay Usuarios");
+                    strcpy(buff_out, "3/ERROR: No hay Usuarios");
                 }
 
             break;
@@ -299,20 +299,19 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
 
                 if (strlen(consulta) > 0){
-                    snprintf(buff_cons, MAX_BUFF, "El Top1 es: %s ", consulta);
+                    snprintf(buff_cons, MAX_BUFF, "4/El Top1 es: %s ", consulta);
                     strcpy(buff_out, buff_cons);
                 }
                 else{
-                    strcpy(buff_out, "ERROR: No hay Usuarios");
+                    strcpy(buff_out, "4/ERROR: No hay Usuarios");
                 }
 
             break;
 
             case(5):
                 generar_lista_conectados(lista_conectados);
-                snprintf(buff_cons, MAX_BUFF, "La lista es: %s ", lista_conectados);
+                snprintf(buff_cons, MAX_BUFF, "5/La lista es: %s ", lista_conectados);
                 strcpy(buff_out, buff_cons);
-                //printf("%s", buff_out);
             break;
         //FUTUROS MODOS ...(!)
         default:
@@ -320,7 +319,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             snprintf(buff_out, sizeof(buff_out), "Modo no reconocido.\n");
             break;
     }
-
     // Enviar la respuesta al cliente
     if (write(sock_conn, buff_out, strlen(buff_out)) < 0) {
         perror("Error al escribir en el socket");
@@ -518,18 +516,25 @@ void set_client_name(ClientInfo* client, const char* name) {
 
 void enviar_info_jugadores_en_linea() {
     char lista[MAX_BUFF];
+    char buffer_temp[MAX_BUFF];
+    lista[0] = '\0';
+    
+    // Genera la lista de clientes conectados en 'lista'
     generar_lista_conectados(lista);
-
+    
+    // Usa un búfer temporal para formatear el mensaje final
     pthread_mutex_lock(&mutex);
+    snprintf(buffer_temp, MAX_BUFF, "7/%s", lista);
     for (int i = 0; i < connected_clients.count; i++) {
         if (connected_clients.clients[i] != NULL) {
-            if (write(connected_clients.clients[i]->sock_conn, lista, strlen(lista)) < 0) {
+            if (write(connected_clients.clients[i]->sock_conn, buffer_temp, strlen(buffer_temp)) < 0) {
                 perror("Error al enviar info a cliente");
             }
         }
     }
     pthread_mutex_unlock(&mutex);
 }
+
 
 void init_client_array() {
     pthread_mutex_lock(&mutex);
