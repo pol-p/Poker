@@ -66,3 +66,32 @@ Sabemos que aún queda trabajo por hacer. Uno de nuestros principales objetivos 
 
 
 🔗 Mira el video de la versión dos aquí:  https://www.youtube.com/watch?v=n_oaMY6cOro 🔗
+
+
+
+
+
+
+🔔 Versión 3.0 del PokerShowdown- ¡Actualización Disponible! 🔔
+
+¡Poker Showdown sigue creciendo! 💪 En esta nueva versión traemos mejoras clave para que la experiencia de juego sea más fluida, social y preparada para el futuro del proyecto.
+
+🔥 ¿Qué hay de nuevo en la versión 3.0?
+
+- Visualización de usuarios conectados en tiempo real. 🟢  
+  ¡Ahora puedes ver quién está en línea! Esta funcionalidad hace que el juego sea más interactivo y te prepara para el modo multijugador.  
+
+- Corrección de bugs para una experiencia más estable. 🛠️  
+  Hemos pulido errores y mejorado el rendimiento general para que jugar sea más cómodo y sin interrupciones.
+
+
+🧠 *Mirando al futuro...*
+
+Ya estamos trabajando en una versión totalmente reestructurada del código 🧱, con un enfoque en la claridad, organización y facilidad de colaboración. Esto nos permitirá muy pronto **abrir el proyecto a la comunidad** como código abierto, y facilitará la participación de quienes quieran aportar, aprender o mejorar Poker Showdown con nosotros. 💡🤝
+
+💬 ¿Te gusta lo que ves? ¿Te gustaría contribuir cuando el código esté disponible? ¡Síguenos de cerca y prepárate para las próximas manos! 🃏💥
+
+🔗 Aquí adjuntamos el vídeo con la explicación de esta nueva versión!! 
+
+https://youtu.be/0WITn5PlZhE
+
