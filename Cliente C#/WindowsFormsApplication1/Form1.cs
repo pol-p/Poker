@@ -8,15 +8,21 @@ using System.Text;
 using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace WindowsFormsApplication1
 {
+   
     public partial class Form1 : Form
     {
         Socket server;
+        Thread atender;
+        int PORT = 9000;
         public Form1()
         {
             InitializeComponent();
+            CheckForIllegalCrossThreadCalls = false;
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -25,12 +31,70 @@ namespace WindowsFormsApplication1
            
         }
 
+        private void AtenderServidor()
+        {
+            while (true)
+            {
+                // Recibimos mensaje del servidor
+                byte[] msg2 = new byte[80];
+                server.Receive(msg2); //Revisar
+                string[] trozos = Encoding.ASCII.GetString(msg2).Split('/'); //Lo trozeo por barra
+                int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
+                string mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+
+                
+                switch (codigo)
+                {
+                    case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
+
+                        MessageBox.Show(trozos[1]);
+                        break;
+
+                    case 2: //Respuesta del servidor a si mi nombre es bonito (codigo2).
+
+                        MessageBox.Show(trozos[1]);
+
+                        break;
+
+                    case 3: //Respuesta del servidor a si soy alto o no (codigo3)
+
+                        MessageBox.Show(trozos[1]);
+                        break;
+
+                    case 4: //Respuesta del servidor a la longitud de nombre (codigo1).
+
+                        MessageBox.Show(trozos[1]);
+                        break;
+
+                    case 5: //Respuesta del servidor a si mi nombre es bonito (codigo2).
+
+                        MessageBox.Show(trozos[1]);
+
+                        break;
+
+                    case 6: //Respuesta del servidor a si soy alto o no (codigo3)
+
+                        MessageBox.Show(trozos[1]);
+                        break;
+
+                    case 7: //Respuesta del servidor del número de peticiones realizadas
+
+                        label_lista_con.Text = trozos[1];
+                        break;
+
+                    default:
+                        MessageBox.Show("Error");
+                        break;
+                }
+
+            }
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse(IP.Text);
-            IPEndPoint ipep = new IPEndPoint(direc, 9004);
+            IPAddress direc = IPAddress.Parse("192.168.1.144");
+            IPEndPoint ipep = new IPEndPoint(direc, PORT);
             
 
             //Creamos el socket 
@@ -60,11 +124,7 @@ namespace WindowsFormsApplication1
             server.Send(msg);
 
             //repsuesta
-            byte[] msg2 = new byte[512];
-            int bytesRecibidos = server.Receive(msg2);
-            string respuesta = Encoding.ASCII.GetString(msg2, 0, bytesRecibidos).Trim('\0');  // Limpiar la respuesta
-
-            MessageBox.Show(respuesta);
+           
         }
 
         // Botón para iniciar sesión
@@ -76,11 +136,11 @@ namespace WindowsFormsApplication1
             server.Send(msg);
 
             //respuesta
-            byte[] msg2 = new byte[512];
-            int bytesRecibidos = server.Receive(msg2);
-            string respuesta = Encoding.ASCII.GetString(msg2, 0, bytesRecibidos).Trim('\0');  // Limpiar la respuesta
+            
 
-            MessageBox.Show(respuesta);
+            ThreadStart ts = delegate { AtenderServidor(); };
+            atender = new Thread(ts);
+            atender.Start();
         }
 
         private void Desconectar_Click(object sender, EventArgs e)
@@ -119,12 +179,7 @@ namespace WindowsFormsApplication1
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
 
-            //respuesta
-            byte[] msg2 = new byte[512];
-            int bytesRecibidos = server.Receive(msg2);
-            string respuesta = Encoding.ASCII.GetString(msg2, 0, bytesRecibidos).Trim('\0');  // Limpiar la respuesta
-
-            MessageBox.Show(respuesta);
+            
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -134,12 +189,17 @@ namespace WindowsFormsApplication1
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
 
-            //respuesta
-            byte[] msg2 = new byte[512];
-            int bytesRecibidos = server.Receive(msg2);
-            string respuesta = Encoding.ASCII.GetString(msg2, 0, bytesRecibidos).Trim('\0');  // Limpiar la respuesta
-
-            MessageBox.Show(respuesta);
         }
+
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            //enviar
+            string mensaje = "5/"; // LISTA USUARIOS
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
+       
+        }
+    
     }
 }

@@ -42,6 +42,8 @@
             this.Desconectar = new System.Windows.Forms.Button();
             this.Users = new System.Windows.Forms.Button();
             this.Top1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.label_lista_con = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -181,11 +183,32 @@
             this.Top1.UseVisualStyleBackColor = true;
             this.Top1.Click += new System.EventHandler(this.button2_Click);
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(452, 411);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(140, 60);
+            this.button2.TabIndex = 16;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click_1);
+            // 
+            // label_lista_con
+            // 
+            this.label_lista_con.AutoSize = true;
+            this.label_lista_con.Location = new System.Drawing.Point(566, 145);
+            this.label_lista_con.Name = "label_lista_con";
+            this.label_lista_con.Size = new System.Drawing.Size(35, 13);
+            this.label_lista_con.TabIndex = 17;
+            this.label_lista_con.Text = "label5";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(741, 562);
+            this.Controls.Add(this.label_lista_con);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.Top1);
             this.Controls.Add(this.Users);
             this.Controls.Add(this.Desconectar);
@@ -224,6 +247,8 @@
         private System.Windows.Forms.Button Desconectar;
         private System.Windows.Forms.Button Users;
         private System.Windows.Forms.Button Top1;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Label label_lista_con;
     }
 }
 
