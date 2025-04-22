@@ -95,3 +95,27 @@ Ya estamos trabajando en una versión totalmente reestructurada del código 🧱
 
 https://youtu.be/0WITn5PlZhE
 
+
+🔔 Versión 4.0 del Poker Showdown – ¡Invita a tus amigos a jugar! 🎉
+
+¡Poker Showdown sigue subiendo de nivel! 🃏 En esta versión 4.0, traemos una de las funciones más esperadas por nuestra comunidad: la posibilidad de invitar a otros jugadores en línea a una partida. 💌
+
+🔥 ¿Qué hay de nuevo en la versión 4.0?
+
+🎯 Sistema de invitaciones en tiempo real
+Ahora puedes invitar a otros jugadores conectados a unirse a tu partida. Ellos podrán aceptar o rechazar la invitación en el momento. Esta nueva característica fomenta una experiencia más social e interactiva en Poker Showdown. 🧑‍🤝‍🧑♠️
+
+⚙️ Mejoras internas y optimización del flujo de conexión
+Además del nuevo sistema de invitaciones, hemos afinado el sistema de usuarios en línea para hacerlo aún más rápido y preciso. 🛠️
+
+🚀 Una experiencia más conectada y dinámica
+Con esta actualización damos un paso más hacia un entorno multijugador completo, donde la estrategia y la amistad se mezclan en cada partida. 🎮
+
+🎥 Video explicativo de la versión 4.0
+¡No te lo pierdas! En este video te mostramos cómo funciona la nueva función de invitaciones y te explicamos los detalles detrás del desarrollo de esta versión:
+
+🔗 https://youtu.be/z7ZsmBS1Pa8 🔗
+
+Una vez más, este ha sido un esfuerzo conjunto, y cada línea de código representa el trabajo en equipo y la pasión por seguir creciendo con Poker Showdown. 🤝✨
+
+🎊 ¡Gracias por seguir acompañándonos en esta aventura! Cada versión es un paso más hacia el mejor juego de póker digital. 🏆💥
