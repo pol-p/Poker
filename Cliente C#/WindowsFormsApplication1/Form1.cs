@@ -15,9 +15,12 @@ namespace WindowsFormsApplication1
    
     public partial class Form1 : Form
     {
+        private string selectedPlayerName;
+        private string invitationPlayer;
         Socket server;
         Thread atender;
-        int PORT = 9000;
+        int PORT = 9002;
+        bool conectado = false; 
         public Form1()
         {
             InitializeComponent();
@@ -33,67 +36,113 @@ namespace WindowsFormsApplication1
 
         private void AtenderServidor()
         {
-            while (true)
+            while (conectado)
             {
-                // Recibimos mensaje del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2); //Revisar
-                string[] trozos = Encoding.ASCII.GetString(msg2).Split('/'); //Lo trozeo por barra
-                int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
-                string mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-
-                
-                switch (codigo)
+                try
                 {
-                    case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
-
-                        MessageBox.Show(trozos[1]);
+                    byte[] msg2 = new byte[200];
+                    int bytesRecibidos = server.Receive(msg2);
+                    if (bytesRecibidos == 0)
+                    {
+                        // El servidor cerró la conexión
+                        conectado = false;
                         break;
 
-                    case 2: //Respuesta del servidor a si mi nombre es bonito (codigo2).
+                    }
+                    string bytes = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+                    string[] trozos = Encoding.ASCII.GetString(msg2).Split('/'); //Lo trozeo por barra
+                    int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
+                    string mensaje = trozos[1];
 
-                        MessageBox.Show(trozos[1]);
+                    switch (codigo)
+                    {
+                        case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
 
-                        break;
+                            MessageBox.Show(mensaje);
+                            break;
 
-                    case 3: //Respuesta del servidor a si soy alto o no (codigo3)
+                        case 2: //Respuesta del servidor a si mi nombre es bonito (codigo2).
 
-                        MessageBox.Show(trozos[1]);
-                        break;
+                            MessageBox.Show(mensaje);
 
-                    case 4: //Respuesta del servidor a la longitud de nombre (codigo1).
+                            break;
 
-                        MessageBox.Show(trozos[1]);
-                        break;
+                        case 3: //Respuesta del servidor a si soy alto o no (codigo3)
 
-                    case 5: //Respuesta del servidor a si mi nombre es bonito (codigo2).
+                            MessageBox.Show(mensaje);
+                            break;
 
-                        MessageBox.Show(trozos[1]);
+                        case 4: //Respuesta del servidor a la longitud de nombre (codigo1).
 
-                        break;
+                            MessageBox.Show(mensaje);
+                            break;
 
-                    case 6: //Respuesta del servidor a si soy alto o no (codigo3)
+                        case 5: //Respuesta del servidor a si mi nombre es bonito (codigo2).
 
-                        MessageBox.Show(trozos[1]);
-                        break;
+                            MessageBox.Show(mensaje);
 
-                    case 7: //Respuesta del servidor del número de peticiones realizadas
+                            break;
 
-                        label_lista_con.Text = trozos[1];
-                        break;
+                        case 6: //Respuesta del servidor a si soy alto o no (codigo3)
 
-                    default:
-                        MessageBox.Show("Error");
-                        break;
+                            MessageBox.Show(mensaje);
+                            break;
+
+                        case 7: //Lista conectados
+
+                            DataTable dt = new DataTable();
+                            dt.Columns.Add("USERNAME");
+
+                            string[] nombres = trozos[1].Split(',');
+                            foreach (string nombre in nombres)
+                            {
+                                if (!string.IsNullOrWhiteSpace(nombre)) // Validación por si hay nombres vacíos
+                                    dt.Rows.Add(nombre.Trim());
+                            }
+
+                            // Asignar el DataSource
+                            this.Invoke((MethodInvoker)delegate {
+                                dataGridView1.ReadOnly = true;
+                                dataGridView1.DataSource = dt;
+                                dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                                dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+                            });
+                            
+                            break;
+
+                        case 8: //Invitacion realizada
+
+                            MessageBox.Show(mensaje);
+                            break;
+                        case 9: //Acceptar denegar invitacion
+                            invitationPlayer = mensaje.Split('-')[1];
+                            MessageBox.Show(mensaje);
+                            break;
+                        default:
+                            MessageBox.Show("Error");
+                            break;
+                    }
                 }
-
+                catch (SocketException ex)
+                {
+                    MessageBox.Show("Error en recepción: " + ex.Message);
+                    conectado = false;
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error general: " + ex.Message);
+                    conectado = false;
+                    break;
+                }
             }
+           
         }
         private void button1_Click(object sender, EventArgs e)
         {
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse("192.168.1.144");
+            IPAddress direc = IPAddress.Parse("192.168.1.128");
             IPEndPoint ipep = new IPEndPoint(direc, PORT);
             
 
@@ -135,8 +184,8 @@ namespace WindowsFormsApplication1
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
 
-            //respuesta
-            
+           
+            conectado = true;
 
             ThreadStart ts = delegate { AtenderServidor(); };
             atender = new Thread(ts);
@@ -145,6 +194,7 @@ namespace WindowsFormsApplication1
 
         private void Desconectar_Click(object sender, EventArgs e)
         {
+
             string mensaje = "0/";
 
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
@@ -158,8 +208,16 @@ namespace WindowsFormsApplication1
             }
             // Nos desconectamos
             this.BackColor = Color.Gray;
-            server.Shutdown(SocketShutdown.Both);
-            server.Close();
+            conectado = false;
+            try
+            {
+                server.Shutdown(SocketShutdown.Both);
+                server.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cerrar: " + ex.Message);
+            }
         }
 
         private void label3_Click(object sender, EventArgs e)
@@ -200,6 +258,46 @@ namespace WindowsFormsApplication1
 
        
         }
-    
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0) // Asegura que no se haga click en los headers
+            {
+                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
+                selectedPlayerName = row.Cells["USERNAME"].Value.ToString(); // Nombre de la columna
+                MessageBox.Show(selectedPlayerName);
+            }
+        }
+
+        private void Invitar_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(selectedPlayerName))
+            {
+                // Aquí usas selectedPlayerName para lo que necesites
+                string mensaje = $"6/{selectedPlayerName}"; // Ejemplo: código 6 para invitación
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("Selecciona un jugador primero");
+            }
+        }
+
+        private void Aceptar_sol_Click(object sender, EventArgs e)
+        {
+            //enviar
+            string mensaje = $"7/1/{invitationPlayer}"; // Aceptar Solicitud
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+
+        private void Decline_sol_Click(object sender, EventArgs e)
+        {
+            //enviar
+            string mensaje = $"7/0/{invitationPlayer}"; // Denegar Solicitud
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
     }
 }
