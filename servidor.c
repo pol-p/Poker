@@ -10,10 +10,11 @@
 #include <mysql.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9000
+#define PORT 9002
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
@@ -51,6 +52,7 @@ void generar_lista_conectados(char *salida);
 void enviar_info_jugadores_en_linea();
 void compact_client_array();
 void init_client_array();
+int searchsocket(char *playername);
 
 int main(int argc, char **argv) {
     int sock_listen, sock_conn;
@@ -182,6 +184,7 @@ void* handle_client_thread(void* arg) {
 }
 
 int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo *client) {
+    unsigned accept = 0;
     int modo;
     char *token;
     char buff_out[100];
@@ -189,9 +192,11 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
     char consulta[MAX_SIZE];
     int err = 0;
     char name[20];
+    char jugador[20];
     char email[50];
     char passwd[25];
     char lista_conectados[MAX_BUFF];
+    int inv_socket = -1;
     // Extraer el token del mensaje
     token = strtok(buff_in, "/");
     modo = atoi(token);
@@ -313,6 +318,76 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 snprintf(buff_cons, MAX_BUFF, "5/La lista es: %s ", lista_conectados);
                 strcpy(buff_out, buff_cons);
             break;
+
+            case(6):
+
+                token = strtok(NULL, "/");
+                if(token == NULL) {
+                    strcpy(buff_out, "Introduce el nombre");
+                    break;
+                }
+                strcpy(jugador, token);
+                
+                // Buscar el socket del JUGADOR INVITADO (no del cliente actual)
+                inv_socket = searchsocket(jugador); 
+                
+                if (inv_socket == -1) {  //  Verificar si el jugador existe
+                    snprintf(buff_cons, MAX_BUFF, "100/Error: Jugador %s no encontrado", jugador);
+                    strcpy(buff_out, buff_cons);
+                    break;
+                }
+            
+                // Usar client->name (nombre del cliente que invita)
+                snprintf(buff_cons, MAX_BUFF, "9/El Cliente %s te ha invitado a jugar-%s", client->name, client->name); 
+            
+                if (write(inv_socket, buff_cons, strlen(buff_cons)) < 0) {
+                    perror("[!] Error al enviar invitación");
+                    snprintf(buff_out, sizeof(buff_out), "100/Error al enviar solicitud a %s", jugador);
+                }
+                snprintf(buff_cons, MAX_BUFF, "8/Solicitud enviada");
+                strcpy(buff_out, buff_cons);
+            break;
+
+            case(7):
+
+                token = strtok(NULL, "/");
+                if(token == NULL) {
+                    strcpy(buff_out, "100/Error formato");
+                    break;
+                }
+                accept = atoi(token);
+            
+                token = strtok(NULL, "/");  // Nombre del QUE ENVIÓ LA INVITACIÓN (cliente original)
+                if(token == NULL) {
+                    strcpy(buff_out, "100/Error formato");
+                    break;
+                }
+                strcpy(jugador, token);
+            
+                // Buscar socket del QUE ENVIÓ LA INVITACIÓN (no del que responde)
+                inv_socket = searchsocket(jugador);
+                if (inv_socket == -1) {
+                    snprintf(buff_cons, MAX_BUFF, "100/Error: Jugador %s no conectado", jugador);
+                    strcpy(buff_out, buff_cons);
+                    break;
+                }
+            
+                // Enviar respuesta al socket correcto
+                if (accept) {
+                    strcpy(buff_cons, "8/Invitacion Aceptada");
+                    accept = 0;
+                } else {
+                    strcpy(buff_cons, "8/Invitacion Denegada");
+                }
+                
+                if (write(inv_socket, buff_cons, strlen(buff_cons)) < 0) {
+                    perror("[!] Error al enviar respuesta de invitación");
+                    snprintf(buff_out, sizeof(buff_out), "100/Error al notificar a %s", jugador);   
+                }
+                snprintf(buff_cons, MAX_BUFF, "8/Enviado con exito");
+                strcpy(buff_out, buff_cons);
+
+            break;
         //FUTUROS MODOS ...(!)
         default:
             printf("Modo no reconocido.\n");
@@ -391,7 +466,7 @@ void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *err
 
         // Agregar "/" si no es la última fila
         if (mysql_num_rows(resultado) > 1) {
-            strncat(buffer, "/", MAX_SIZE - strlen(buffer) - 1);
+            strncat(buffer, ",", MAX_SIZE - strlen(buffer) - 1);
         }
     }
 
@@ -571,4 +646,17 @@ void compact_client_array() {
         }
     }
     pthread_mutex_unlock(&mutex);
+}
+
+int searchsocket(char *playername) {
+    pthread_mutex_lock(&mutex);  // <<- Añadir mutex para seguridad en hilos
+    for (int i = 0; i < connected_clients.count; i++) {
+        if (connected_clients.clients[i] != NULL && 
+            strcmp(connected_clients.clients[i]->name, playername) == 0) {
+            pthread_mutex_unlock(&mutex);
+            return connected_clients.clients[i]->sock_conn;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+    return -1;  // Jugador no encontrado
 }
