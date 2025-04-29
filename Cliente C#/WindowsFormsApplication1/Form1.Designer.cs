@@ -47,6 +47,16 @@
             this.Invitar = new System.Windows.Forms.Button();
             this.Aceptar_sol = new System.Windows.Forms.Button();
             this.Decline_sol = new System.Windows.Forms.Button();
+            this.Room1_label = new System.Windows.Forms.Label();
+            this.Room2_label = new System.Windows.Forms.Label();
+            this.Room3_label = new System.Windows.Forms.Label();
+            this.Room4_label = new System.Windows.Forms.Label();
+            this.JoinR1_btn = new System.Windows.Forms.Button();
+            this.JoinR2_btn = new System.Windows.Forms.Button();
+            this.JoinR3_btn = new System.Windows.Forms.Button();
+            this.JoinR4_btn = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -80,7 +90,7 @@
             // 
             // buttonRegister
             // 
-            this.buttonRegister.Location = new System.Drawing.Point(412, 298);
+            this.buttonRegister.Location = new System.Drawing.Point(60, 217);
             this.buttonRegister.Margin = new System.Windows.Forms.Padding(2);
             this.buttonRegister.Name = "buttonRegister";
             this.buttonRegister.Size = new System.Drawing.Size(100, 40);
@@ -91,7 +101,7 @@
             // 
             // buttonLogin
             // 
-            this.buttonLogin.Location = new System.Drawing.Point(208, 298);
+            this.buttonLogin.Location = new System.Drawing.Point(199, 217);
             this.buttonLogin.Margin = new System.Windows.Forms.Padding(2);
             this.buttonLogin.Name = "buttonLogin";
             this.buttonLogin.Size = new System.Drawing.Size(99, 40);
@@ -102,7 +112,7 @@
             // 
             // nombre
             // 
-            this.nombre.Location = new System.Drawing.Point(320, 125);
+            this.nombre.Location = new System.Drawing.Point(134, 88);
             this.nombre.Margin = new System.Windows.Forms.Padding(2);
             this.nombre.Name = "nombre";
             this.nombre.Size = new System.Drawing.Size(192, 20);
@@ -111,7 +121,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(222, 128);
+            this.label2.Location = new System.Drawing.Point(52, 88);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(44, 13);
@@ -121,7 +131,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(222, 165);
+            this.label3.Location = new System.Drawing.Point(52, 125);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(32, 13);
@@ -132,7 +142,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(222, 210);
+            this.label4.Location = new System.Drawing.Point(52, 168);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(61, 13);
@@ -142,7 +152,7 @@
             // 
             // email
             // 
-            this.email.Location = new System.Drawing.Point(320, 165);
+            this.email.Location = new System.Drawing.Point(134, 122);
             this.email.Margin = new System.Windows.Forms.Padding(2);
             this.email.Name = "email";
             this.email.Size = new System.Drawing.Size(192, 20);
@@ -150,7 +160,7 @@
             // 
             // contraseña
             // 
-            this.contraseña.Location = new System.Drawing.Point(320, 207);
+            this.contraseña.Location = new System.Drawing.Point(134, 161);
             this.contraseña.Margin = new System.Windows.Forms.Padding(2);
             this.contraseña.Name = "contraseña";
             this.contraseña.Size = new System.Drawing.Size(192, 20);
@@ -158,7 +168,7 @@
             // 
             // Desconectar
             // 
-            this.Desconectar.Location = new System.Drawing.Point(657, 23);
+            this.Desconectar.Location = new System.Drawing.Point(831, 18);
             this.Desconectar.Margin = new System.Windows.Forms.Padding(2);
             this.Desconectar.Name = "Desconectar";
             this.Desconectar.Size = new System.Drawing.Size(73, 31);
@@ -169,7 +179,7 @@
             // 
             // Users
             // 
-            this.Users.Location = new System.Drawing.Point(55, 439);
+            this.Users.Location = new System.Drawing.Point(23, 378);
             this.Users.Name = "Users";
             this.Users.Size = new System.Drawing.Size(61, 33);
             this.Users.TabIndex = 14;
@@ -179,7 +189,7 @@
             // 
             // Top1
             // 
-            this.Top1.Location = new System.Drawing.Point(164, 439);
+            this.Top1.Location = new System.Drawing.Point(117, 381);
             this.Top1.Name = "Top1";
             this.Top1.Size = new System.Drawing.Size(56, 33);
             this.Top1.TabIndex = 15;
@@ -189,18 +199,18 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(286, 473);
+            this.button2.Location = new System.Drawing.Point(531, 54);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(140, 60);
+            this.button2.Size = new System.Drawing.Size(91, 27);
             this.button2.TabIndex = 16;
-            this.button2.Text = "button2";
+            this.button2.Text = "ListaConectados";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click_1);
             // 
             // dataGridView1
             // 
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(584, 107);
+            this.dataGridView1.Location = new System.Drawing.Point(371, 54);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.Size = new System.Drawing.Size(145, 231);
             this.dataGridView1.TabIndex = 18;
@@ -208,7 +218,8 @@
             // 
             // Invitar
             // 
-            this.Invitar.Location = new System.Drawing.Point(615, 350);
+            this.Invitar.Enabled = false;
+            this.Invitar.Location = new System.Drawing.Point(406, 291);
             this.Invitar.Name = "Invitar";
             this.Invitar.Size = new System.Drawing.Size(91, 22);
             this.Invitar.TabIndex = 19;
@@ -218,7 +229,7 @@
             // 
             // Aceptar_sol
             // 
-            this.Aceptar_sol.Location = new System.Drawing.Point(573, 378);
+            this.Aceptar_sol.Location = new System.Drawing.Point(371, 319);
             this.Aceptar_sol.Name = "Aceptar_sol";
             this.Aceptar_sol.Size = new System.Drawing.Size(72, 36);
             this.Aceptar_sol.TabIndex = 20;
@@ -228,7 +239,7 @@
             // 
             // Decline_sol
             // 
-            this.Decline_sol.Location = new System.Drawing.Point(667, 378);
+            this.Decline_sol.Location = new System.Drawing.Point(449, 319);
             this.Decline_sol.Name = "Decline_sol";
             this.Decline_sol.Size = new System.Drawing.Size(72, 36);
             this.Decline_sol.TabIndex = 21;
@@ -236,11 +247,124 @@
             this.Decline_sol.UseVisualStyleBackColor = true;
             this.Decline_sol.Click += new System.EventHandler(this.Decline_sol_Click);
             // 
+            // Room1_label
+            // 
+            this.Room1_label.AutoSize = true;
+            this.Room1_label.Font = new System.Drawing.Font("Palace Script MT", 36F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Room1_label.ForeColor = System.Drawing.SystemColors.InfoText;
+            this.Room1_label.Location = new System.Drawing.Point(640, 122);
+            this.Room1_label.Name = "Room1_label";
+            this.Room1_label.Size = new System.Drawing.Size(174, 45);
+            this.Room1_label.TabIndex = 22;
+            this.Room1_label.Text = "0/4 Room 1";
+            // 
+            // Room2_label
+            // 
+            this.Room2_label.AutoSize = true;
+            this.Room2_label.Font = new System.Drawing.Font("Palace Script MT", 36F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Room2_label.ForeColor = System.Drawing.SystemColors.InfoText;
+            this.Room2_label.Location = new System.Drawing.Point(642, 187);
+            this.Room2_label.Name = "Room2_label";
+            this.Room2_label.Size = new System.Drawing.Size(174, 45);
+            this.Room2_label.TabIndex = 23;
+            this.Room2_label.Text = "0/4 Room 2";
+            // 
+            // Room3_label
+            // 
+            this.Room3_label.AutoSize = true;
+            this.Room3_label.Font = new System.Drawing.Font("Palace Script MT", 36F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Room3_label.ForeColor = System.Drawing.SystemColors.InfoText;
+            this.Room3_label.Location = new System.Drawing.Point(642, 254);
+            this.Room3_label.Name = "Room3_label";
+            this.Room3_label.Size = new System.Drawing.Size(174, 45);
+            this.Room3_label.TabIndex = 24;
+            this.Room3_label.Text = "0/4 Room 3";
+            // 
+            // Room4_label
+            // 
+            this.Room4_label.AutoSize = true;
+            this.Room4_label.Font = new System.Drawing.Font("Palace Script MT", 36F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Room4_label.ForeColor = System.Drawing.SystemColors.InfoText;
+            this.Room4_label.Location = new System.Drawing.Point(642, 330);
+            this.Room4_label.Name = "Room4_label";
+            this.Room4_label.Size = new System.Drawing.Size(174, 45);
+            this.Room4_label.TabIndex = 25;
+            this.Room4_label.Text = "0/4 Room 4";
+            // 
+            // JoinR1_btn
+            // 
+            this.JoinR1_btn.Location = new System.Drawing.Point(820, 135);
+            this.JoinR1_btn.Name = "JoinR1_btn";
+            this.JoinR1_btn.Size = new System.Drawing.Size(83, 31);
+            this.JoinR1_btn.TabIndex = 26;
+            this.JoinR1_btn.Text = "JOIN";
+            this.JoinR1_btn.UseVisualStyleBackColor = true;
+            this.JoinR1_btn.Click += new System.EventHandler(this.JoinR1_btn_Click);
+            // 
+            // JoinR2_btn
+            // 
+            this.JoinR2_btn.Location = new System.Drawing.Point(820, 200);
+            this.JoinR2_btn.Name = "JoinR2_btn";
+            this.JoinR2_btn.Size = new System.Drawing.Size(83, 31);
+            this.JoinR2_btn.TabIndex = 27;
+            this.JoinR2_btn.Text = "JOIN";
+            this.JoinR2_btn.UseVisualStyleBackColor = true;
+            this.JoinR2_btn.Click += new System.EventHandler(this.JoinR2_btn_Click);
+            // 
+            // JoinR3_btn
+            // 
+            this.JoinR3_btn.Location = new System.Drawing.Point(822, 267);
+            this.JoinR3_btn.Name = "JoinR3_btn";
+            this.JoinR3_btn.Size = new System.Drawing.Size(83, 31);
+            this.JoinR3_btn.TabIndex = 28;
+            this.JoinR3_btn.Text = "JOIN";
+            this.JoinR3_btn.UseVisualStyleBackColor = true;
+            this.JoinR3_btn.Click += new System.EventHandler(this.JoinR3_btn_Click);
+            // 
+            // JoinR4_btn
+            // 
+            this.JoinR4_btn.Location = new System.Drawing.Point(821, 343);
+            this.JoinR4_btn.Name = "JoinR4_btn";
+            this.JoinR4_btn.Size = new System.Drawing.Size(83, 31);
+            this.JoinR4_btn.TabIndex = 29;
+            this.JoinR4_btn.Text = "JOIN";
+            this.JoinR4_btn.UseVisualStyleBackColor = true;
+            this.JoinR4_btn.Click += new System.EventHandler(this.JoinR4_btn_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(744, 423);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(61, 34);
+            this.button3.TabIndex = 30;
+            this.button3.Text = "button3";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(531, 431);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(2);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(192, 20);
+            this.textBox1.TabIndex = 31;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(741, 562);
+            this.ClientSize = new System.Drawing.Size(915, 508);
+            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.JoinR4_btn);
+            this.Controls.Add(this.JoinR3_btn);
+            this.Controls.Add(this.JoinR2_btn);
+            this.Controls.Add(this.JoinR1_btn);
+            this.Controls.Add(this.Room4_label);
+            this.Controls.Add(this.Room3_label);
+            this.Controls.Add(this.Room2_label);
+            this.Controls.Add(this.Room1_label);
             this.Controls.Add(this.Decline_sol);
             this.Controls.Add(this.Aceptar_sol);
             this.Controls.Add(this.Invitar);
@@ -290,6 +414,16 @@
         private System.Windows.Forms.Button Invitar;
         private System.Windows.Forms.Button Aceptar_sol;
         private System.Windows.Forms.Button Decline_sol;
+        private System.Windows.Forms.Label Room1_label;
+        private System.Windows.Forms.Label Room2_label;
+        private System.Windows.Forms.Label Room3_label;
+        private System.Windows.Forms.Label Room4_label;
+        private System.Windows.Forms.Button JoinR1_btn;
+        private System.Windows.Forms.Button JoinR2_btn;
+        private System.Windows.Forms.Button JoinR3_btn;
+        private System.Windows.Forms.Button JoinR4_btn;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }
 

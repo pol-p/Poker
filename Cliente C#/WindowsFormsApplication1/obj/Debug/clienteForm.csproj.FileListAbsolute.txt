@@ -140,3 +140,4 @@ C:\Users\usuario\Desktop\Poker\Cliente C#\WindowsFormsApplication1\obj\Debug\cli
 C:\Users\usuario\Desktop\Poker\Cliente C#\WindowsFormsApplication1\obj\Debug\clienteForm.csproj.CoreCompileInputs.cache
 C:\Users\usuario\Desktop\Poker\Cliente C#\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.exe
 C:\Users\usuario\Desktop\Poker\Cliente C#\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.pdb
+C:\Users\usuario\Desktop\Poker\Cliente C#\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.Room.resources

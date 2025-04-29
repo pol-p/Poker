@@ -17,10 +17,14 @@ namespace WindowsFormsApplication1
     {
         private string selectedPlayerName;
         private string invitationPlayer;
+        List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 9002;
-        bool conectado = false; 
+        int PORT = 9001;
+        bool conectado = false;
+        int room_num;
+
+        string prueba;
         public Form1()
         {
             InitializeComponent();
@@ -118,10 +122,99 @@ namespace WindowsFormsApplication1
                             invitationPlayer = mensaje.Split('-')[1];
                             MessageBox.Show(mensaje);
                             break;
+
+                        case 10:
+                            // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
+                            MessageBox.Show(mensaje);
+                            int numRoom = Convert.ToInt32(mensaje);
+                            int numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
+                            // Verificamos si la sala ya está abierta
+                            Room salaExistente = romms.FirstOrDefault(room => room.num_room == numRoom);
+                           
+                            if (salaExistente == null)
+                            {
+                                // Si no existe, es un nuevo jugador uniéndose
+                                MessageBox.Show("Te has unido a la sala " + numRoom);
+
+                                // Actualizamos el label correspondiente según el número de sala
+                                switch (numRoom)
+                                {
+                                    case 1:
+                                        Room1_label.Text = $"{numPersonas}/4 Room 1";
+                                        break;
+                                    case 2:
+                                        Room2_label.Text = $"{numPersonas}/4 Room 2";
+                                        break;
+                                    case 3:
+                                        Room3_label.Text = $"{numPersonas}/4 Room 3";
+                                        break;
+                                    case 4:
+                                        Room4_label.Text = $"{numPersonas}/4 Room 4";
+                                        break;
+                                }
+
+                                // Creamos la sala y lanzamos el nuevo hilo
+                                this.room_num = numRoom;
+                                ThreadStart ts = delegate { CreateGame(trozos); };
+                                Thread t = new Thread(ts);
+                                t.Start();
+                            }
+                            else
+                            {
+                                // Si ya existe, simplemente actualizamos los nombres en la sala
+                                //salaExistente.SetNombres(trozos, this.usuario);
+                            }
+                            break;
+                        case 11:
+                            // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
+                            MessageBox.Show(mensaje);
+                            numRoom = Convert.ToInt32(mensaje);
+                            numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
+                            // Verificamos si la sala ya está abierta
+                                switch (numRoom)
+                                {
+                                    case 1:
+                                        Room1_label.Text = $"{numPersonas}/4 Room 1";
+                                        break;
+                                    case 2:
+                                        Room2_label.Text = $"{numPersonas}/4 Room 2";
+                                        break;
+                                    case 3:
+                                        Room3_label.Text = $"{numPersonas}/4 Room 3";
+                                        break;
+                                    case 4:
+                                        Room4_label.Text = $"{numPersonas}/4 Room 4";
+                                        break;
+                                }
+                            break;
+                        case 12:
+                            // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
+                            MessageBox.Show(mensaje);
+                            numRoom = Convert.ToInt32(mensaje);
+                            numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
+                            // Verificamos si la sala ya está abierta
+                            switch (numRoom)
+                            {
+                                case 1:
+                                    Room1_label.Text = $"{numPersonas}/4 Room 1";
+                                    break;
+                                case 2:
+                                    Room2_label.Text = $"{numPersonas}/4 Room 2";
+                                    break;
+                                case 3:
+                                    Room3_label.Text = $"{numPersonas}/4 Room 3";
+                                    break;
+                                case 4:
+                                    Room4_label.Text = $"{numPersonas}/4 Room 4";
+                                    break;
+                            }
+                            break;
+
                         default:
                             MessageBox.Show("Error");
                             break;
                     }
+                        
                 }
                 catch (SocketException ex)
                 {
@@ -142,7 +235,7 @@ namespace WindowsFormsApplication1
         {
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse("192.168.1.128");
+            IPAddress direc = IPAddress.Parse("192.168.1.133");
             IPEndPoint ipep = new IPEndPoint(direc, PORT);
             
 
@@ -296,6 +389,58 @@ namespace WindowsFormsApplication1
         {
             //enviar
             string mensaje = $"7/0/{invitationPlayer}"; // Denegar Solicitud
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+
+        private void JoinR1_btn_Click(object sender, EventArgs e)
+        {
+            string mensaje = "8/1";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
+        }
+
+        private void JoinR2_btn_Click(object sender, EventArgs e)
+        {
+            string mensaje = "8/2";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+
+        private void JoinR3_btn_Click(object sender, EventArgs e)
+        {
+            string mensaje = "8/3";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+
+        private void JoinR4_btn_Click(object sender, EventArgs e)
+        {
+            string mensaje = "8/4";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+
+        private void CreateGame(string[] trozos)
+        {
+
+            Room room = new Room(/*this.usuario, this.room, server, trozos[3]*/);
+            romms.Add(room);
+            Invitar.Enabled = true;
+            //room.SetNombres(trozos, this.usuario);
+            room.ShowDialog();
+
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string mensaje = $"9/{textBox1.Text}";
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
         }
