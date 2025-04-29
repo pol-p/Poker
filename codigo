@@ -1,0 +1,2 @@
+gcc -o servidor servidor.c -std=c99 -I/opt/homebrew/Cellar/mysql/9.2.0_3/include/mysql 
+-L/opt/homebrew/Cellar/mysql/9.2.0_3/lib -lmysqlclient -lz  -lzstd  -lssl  -lcrypto -lresolv -l pthreads
