@@ -50,3 +50,6 @@ paket-files/
 
 # Si usas proyectos .NET Core
 project.lock.json
+
+pol.*
+codigo
