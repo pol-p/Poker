@@ -14,11 +14,11 @@
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9001
-#define HOST "127.0.0.1"
-#define USUARIO "usr"
-#define PASSWD "$usrMYSQL123"
-#define DATABASE "Poker"
+#define PORT 50044
+#define HOST "shiva2.upc.es"
+#define USUARIO "root"
+#define PASSWD "mysql"
+#define DATABASE "M9_Poker"
 //#define MAX_CLIENTS 100
 
 typedef struct {
@@ -34,28 +34,9 @@ typedef struct {
     int count;            // Clientes activos
 } DynamicClientArray;
 
-typedef struct 
-{
-    char name[20];
-    int sock_conn;
-}Player;
-
-typedef struct 
-{
-    unsigned int num_players;
-    Player players[4];
-}Room;
-
-typedef struct
-{
-    Room rooms[4];
-}ListaRooms;
-
-
-
 DynamicClientArray connected_clients = {NULL, 0, 0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-ListaRooms list_rooms = {0};
+
 // Declaraciones de funciones
 void error(const char *msg);
 void* handle_client_thread(void* arg);
@@ -72,11 +53,6 @@ void enviar_info_jugadores_en_linea();
 void compact_client_array();
 void init_client_array();
 int searchsocket(char *playername);
-unsigned int AddPlayerToRoom(int num_room, char *name, int sock_conn);
-unsigned int DelPlayerInSala(char* name, int room_num, int socket);
-void enviar_info_jugadores_de_sala(int room, int sock);
-
-
 
 int main(int argc, char **argv) {
     int sock_listen, sock_conn;
@@ -221,9 +197,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
     char passwd[25];
     char lista_conectados[MAX_BUFF];
     int inv_socket = -1;
-    unsigned int room = 0;
-    unsigned int capacity;
-    char mensaje[MAX_BUFF];
     // Extraer el token del mensaje
     token = strtok(buff_in, "/");
     modo = atoi(token);
@@ -415,105 +388,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 strcpy(buff_out, buff_cons);
 
             break;
-            case(8):
-                token = strtok(NULL, "/");
-                if(token == NULL) {
-                    strcpy(buff_out, "100/Error formato");
-                    break;
-                }
-                room = atoi(token);
-                switch (room) {
-                    case(1):
-                    
-                        capacity = AddPlayerToRoom(room, name, sock_conn);
-                        if (capacity == 5){
-                            snprintf(buff_cons, MAX_BUFF, "1/Error capacidad llena de Sala prueba con otra");
-                            strcpy(buff_out, buff_cons);    
-                        }
-                        else{
-                            enviar_info_jugadores_de_sala(room, sock_conn);
-                            snprintf(buff_cons, MAX_BUFF, "10/1/%d", capacity);
-                            strcpy(buff_out, buff_cons);
-                        }
-                    break;
-
-                    case(2):
-                        capacity = AddPlayerToRoom(room, name, sock_conn);
-                        if (capacity == 5){
-                            snprintf(buff_cons, MAX_BUFF, "1/Error capacidad llena de Sala prueba con otra");
-                            strcpy(buff_out, buff_cons);    
-                        }
-                        else{
-                            enviar_info_jugadores_de_sala(room, sock_conn);
-                            snprintf(buff_cons, MAX_BUFF, "10/2/%d", capacity);
-                            strcpy(buff_out, buff_cons);
-                        }
-                    break;
-
-                    case(3):
-                        capacity = AddPlayerToRoom(room, name, sock_conn);
-                        if (capacity == 5){
-                            snprintf(buff_cons, MAX_BUFF, "1/Error capacidad llena de Sala prueba con otra");
-                            strcpy(buff_out, buff_cons);    
-                        }
-                        else{
-                            enviar_info_jugadores_de_sala(room, sock_conn);
-                            snprintf(buff_cons, MAX_BUFF, "10/3/%d", capacity);
-                            strcpy(buff_out, buff_cons);
-                        }
-                    break;
-                    
-                    case(4):
-                        capacity = AddPlayerToRoom(room, name, sock_conn);
-                        if (capacity == 5){
-                            snprintf(buff_cons, MAX_BUFF, "1/Error capacidad llena de Sala prueba con otra");
-                            strcpy(buff_out, buff_cons);    
-                        }
-                        else{
-                            enviar_info_jugadores_de_sala(room, sock_conn);
-                            snprintf(buff_cons, MAX_BUFF, "10/4/%d", capacity);
-                            strcpy(buff_out, buff_cons);
-                        }
-                    break;
-                }
-                
-            break;
-            case(9):
-                token = strtok(NULL, "/");
-                if(token == NULL) {
-                    strcpy(buff_out, "100/Error formato");
-                    break;
-                }
-                room = atoi(token);
-                capacity = DelPlayerInSala(name, room, sock_conn);
-                if (capacity == 5){
-                    snprintf(buff_cons, MAX_BUFF, "1/Error");
-                    strcpy(buff_out, buff_cons);    
-                }
-                else{
-                    enviar_info_jugadores_de_sala(room, sock_conn);
-                    snprintf(buff_cons, MAX_BUFF, "12/%d/%d", room, capacity);
-                    strcpy(buff_out, buff_cons);
-                }
-            break;
-                case (10):
-                token = strtok(NULL, "/");
-                if(token == NULL) {
-                    strcpy(buff_out, "100/Error formato");
-                    break;
-                }
-                strcpy(mensaje, token);
-                if(token == NULL) {
-                    strcpy(buff_out, "100/Error formato");
-                    break;
-                }
-                room = atoi(token);
-                    snprintf(buff_cons, MAX_BUFF, "13/%s/%d", token, room);
-                    strcpy(buff_out, buff_cons);
-                case (11):
-
-                break;
-            break;
         //FUTUROS MODOS ...(!)
         default:
             printf("Modo no reconocido.\n");
@@ -522,10 +396,9 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
     }
     // Enviar la respuesta al cliente
     if (write(sock_conn, buff_out, strlen(buff_out)) < 0) {
-         perror("Error al escribir en el socket");
+        perror("Error al escribir en el socket");
         return 1; // Salir si hay un error en write
-       }
-    
+    }
     if (salir) {
         sleep(1);
         return 1;
@@ -786,71 +659,4 @@ int searchsocket(char *playername) {
     }
     pthread_mutex_unlock(&mutex);
     return -1;  // Jugador no encontrado
-}
-
-unsigned int AddPlayerToRoom(int num_room, char *name, int sock_conn){
-    pthread_mutex_lock(&mutex);
-    unsigned int num_players;
-    num_players = list_rooms.rooms[num_room - 1].num_players;
-    if (num_players < 4){
-        strcpy(list_rooms.rooms[num_room -1].players[num_players].name, name);
-        list_rooms.rooms[num_room -1].players[num_players].sock_conn = sock_conn;
-        num_players++;
-        list_rooms.rooms[num_room - 1].num_players = num_players;
-    }
-    else{
-        pthread_mutex_unlock(&mutex);
-        return 5;
-    }
-    //Debug 
-    //printf("Jugador %s Añadido ahora hay %d", list_rooms.rooms[num_room -1].players[num_players].name, num_players);
-    pthread_mutex_unlock(&mutex);
-    return num_players;
-}
-
-unsigned int DelPlayerInSala(char* name, int room_num, int socket){
-    // Buscar al player
-    pthread_mutex_lock(&mutex);
-    unsigned int target = 5;
-    for (int i = 0; i < list_rooms.rooms[room_num - 1].num_players; i++){
-        if (strcmp(list_rooms.rooms[room_num - 1].players[i].name, name) == 0){
-            target = i;
-        }
-    }
-
-    if (target == 5){
-        //Debug
-        printf("Jugador %s, no esta en la sala %d", name, room_num);
-        pthread_mutex_unlock(&mutex);
-        return 5;
-    }
-    
-    for (int i = target; i < list_rooms.rooms[room_num - 1].num_players - 1; i++){
-        list_rooms.rooms[room_num - 1].players[i] = list_rooms.rooms[room_num - 1].players[i + 1];
-    }
-
-    list_rooms.rooms[room_num - 1].num_players--;
-    memset(&list_rooms.rooms[room_num - 1].players[list_rooms.rooms[room_num - 1].num_players], 0, sizeof(Player));
-    
-///////
-//Debug
-    printf ("Player con nombre %s, en sala %d, Jug tot = %d", name, room_num, list_rooms.rooms[room_num - 1].num_players);
-	
-    pthread_mutex_unlock(&mutex);
-    return list_rooms.rooms[room_num - 1].num_players; // Devolver el nuevo número de jugadores
-}
-
-void enviar_info_jugadores_de_sala(int room, int sock) {
-    char buffer_temp[MAX_BUFF];
-    pthread_mutex_lock(&mutex);
-
-    snprintf(buffer_temp, MAX_BUFF, "12/%d/%d", room, list_rooms.rooms[room - 1].num_players);
-    for (int i = 0; i < connected_clients.count; i++) {
-        if (connected_clients.clients[i] != NULL && !(connected_clients.clients[i]->sock_conn == sock)) {
-            if (write(connected_clients.clients[i]->sock_conn, buffer_temp, strlen(buffer_temp)) < 0) {
-                perror("Error al enviar info a cliente");
-            }
-        }
-    }
-    pthread_mutex_unlock(&mutex);
 }
