@@ -37,6 +37,7 @@ Si quieres ser parte de este proyecto desde el principio, haz clic en el enlace 
 
 
 
+
 🎰 Póker Showdown - Versión 2 🃏
 
 Nos complace presentar la segunda versión de nuestro proyecto de póker, en la que hemos incorporado importantes mejoras y nuevas características para enriquecer la experiencia de juego. ✨
@@ -72,6 +73,7 @@ Sabemos que aún queda trabajo por hacer. Uno de nuestros principales objetivos 
 
 
 
+
 🔔 Versión 3.0 del PokerShowdown- ¡Actualización Disponible! 🔔
 
 ¡Poker Showdown sigue creciendo! 💪 En esta nueva versión traemos mejoras clave para que la experiencia de juego sea más fluida, social y preparada para el futuro del proyecto.
@@ -94,6 +96,11 @@ Ya estamos trabajando en una versión totalmente reestructurada del código 🧱
 🔗 Aquí adjuntamos el vídeo con la explicación de esta nueva versión!! 
 
 https://youtu.be/0WITn5PlZhE
+
+
+
+
+
 
 
 🔔 Versión 4.0 del Poker Showdown – ¡Invita a tus amigos a jugar! 🎉
@@ -119,3 +126,38 @@ Con esta actualización damos un paso más hacia un entorno multijugador complet
 Una vez más, este ha sido un esfuerzo conjunto, y cada línea de código representa el trabajo en equipo y la pasión por seguir creciendo con Poker Showdown. 🤝✨
 
 🎊 ¡Gracias por seguir acompañándonos en esta aventura! Cada versión es un paso más hacia el mejor juego de póker digital. 🏆💥
+
+
+
+
+
+
+
+🎰 **Poker Showdown - Versión 5.0** 🃏
+
+¡La espera ha terminado! Poker Showdown continúa evolucionando y en esta versión 5.0 hemos añadido dos características muy solicitadas por la comunidad para hacer la experiencia de juego aún más divertida y social. 🎉
+
+🔥 **Principales novedades:**
+
+🔗 **Unirse a salas privadas con tus amigos**  
+Ahora puedes crear salas privadas para jugar solo con tus amigos. Únete a una sala, invita a tus amigos y disfruten juntos de la experiencia de Poker Showdown de una forma más íntima y personalizada. 🎮👥
+
+💬 **Chat global en tiempo real**  
+Para una mayor interacción, hemos implementado un chat global en el que podrás comunicarte con otros jugadores durante las partidas. Ya no estarás solo, ¡es hora de socializar mientras juegas! 🗣️💬
+
+🔧 **Mejoras en la estructura del código**  
+Como siempre, seguimos trabajando en la optimización de nuestro código para asegurar que el juego sea lo más fluido posible, con mejor mantenimiento y rendimiento. 📈
+
+🎩 **Próximas mejoras:**
+
+- **Partidas multijugador**: Avanzaremos hacia la posibilidad de jugar con más personas de manera simultánea. ¡Prepárate para las mesas más grandes! 💥
+  
+- **Mejoras en la interfaz de usuario**: Trabajamos en una experiencia más atractiva y sencilla de usar. ¡Queremos que Poker Showdown sea fácil de jugar para todos! 🎨
+
+🎥 **Mira el video de la versión 5.0 aquí:**  
+🔗 [Ver video de la versión 5.0](https://youtu.be/example) 🔗
+
+🏆 **¿Listo para unirte?**  
+La experiencia de Poker Showdown nunca ha sido tan emocionante. Únete a una sala con tus amigos, charla en el chat global y prepárate para las partidas más intensas y divertidas. ¡Esto solo es el comienzo de lo que tenemos preparado para ti! 🍀
+
+Gracias por seguir siendo parte de Poker Showdown. Cada paso que damos es gracias a ti, ¡y no podemos esperar a compartir la próxima actualización! 🚀
