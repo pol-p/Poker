@@ -495,6 +495,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     snprintf(buff_cons, MAX_BUFF, "12/%d/%d", room, capacity);
                     strcpy(buff_out, buff_cons);
                 }
+            break;
                 case (10):
                 token = strtok(NULL, "/");
                 if(token == NULL) {
@@ -509,7 +510,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 room = atoi(token);
                     snprintf(buff_cons, MAX_BUFF, "13/%s/%d", token, room);
                     strcpy(buff_out, buff_cons);
-                break;
                 case (11):
 
                 break;
