@@ -119,7 +119,8 @@ namespace WindowsFormsApplication1
                             MessageBox.Show(mensaje);
                             break;
                         case 9: //Acceptar denegar invitacion
-                            invitationPlayer = mensaje.Split('-')[1];
+                            string[] mg = mensaje.Split('-');
+                            invitationPlayer = mg[1];
                             MessageBox.Show(mensaje);
                             break;
 
@@ -167,7 +168,7 @@ namespace WindowsFormsApplication1
                             break;
                         case 11:
                             // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
-                            MessageBox.Show(mensaje);
+                            //MessageBox.Show(mensaje);
                             numRoom = Convert.ToInt32(mensaje);
                             numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
                             // Verificamos si la sala ya está abierta
@@ -189,7 +190,7 @@ namespace WindowsFormsApplication1
                             break;
                         case 12:
                             // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
-                            MessageBox.Show(mensaje);
+                            //MessageBox.Show(mensaje);
                             numRoom = Convert.ToInt32(mensaje);
                             numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
                             // Verificamos si la sala ya está abierta
@@ -209,7 +210,13 @@ namespace WindowsFormsApplication1
                                     break;
                             }
                             break;
-
+                        case 13:
+ 
+                                    Room1_label.Text = $"{trozos[1]}/4 Room 1";
+                                    Room2_label.Text = $"{trozos[2]}/4 Room 2";
+                                    Room3_label.Text = $"{trozos[3]}/4 Room 3";
+                                    Room4_label.Text = $"{trozos[4].Split('\0')[0]}/4 Room 4";
+                            break;
                         default:
                             MessageBox.Show("Error");
                             break;
@@ -367,7 +374,7 @@ namespace WindowsFormsApplication1
             if (!string.IsNullOrEmpty(selectedPlayerName))
             {
                 // Aquí usas selectedPlayerName para lo que necesites
-                string mensaje = $"6/{selectedPlayerName}"; // Ejemplo: código 6 para invitación
+                string mensaje = $"6/{selectedPlayerName}/{room_num}"; // Ejemplo: código 6 para invitación
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
             }
