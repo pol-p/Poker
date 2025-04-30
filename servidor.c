@@ -75,6 +75,7 @@ int searchsocket(char *playername);
 unsigned int AddPlayerToRoom(int num_room, char *name, int sock_conn);
 unsigned int DelPlayerInSala(char* name, int room_num, int socket);
 void enviar_info_jugadores_de_sala(int room, int sock);
+void enviar_info_jugadores_sala_login(int sock_conn);
 
 
 
@@ -170,6 +171,7 @@ void* handle_client_thread(void* arg) {
         close(client->sock_conn);
         return NULL;
     }
+    enviar_info_jugadores_sala_login(client->sock_conn);
 
     char buff_in[MAX_BUFF];
     int ret;
@@ -305,6 +307,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     strcpy(buff_out, "2/[*] Login con exito");
                     set_client_name(client, name);
                     enviar_info_jugadores_en_linea();
+                   //enviar_info_jugadores_sala_login(sock_conn);
                 }
                 else{
                     strcpy(buff_out, "2/ERROR: Contraseña o usuario incorrecto");
@@ -354,7 +357,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     break;
                 }
                 strcpy(jugador, token);
-                
                 // Buscar el socket del JUGADOR INVITADO (no del cliente actual)
                 inv_socket = searchsocket(jugador); 
                 
@@ -402,6 +404,9 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 // Enviar respuesta al socket correcto
                 if (accept) {
                     strcpy(buff_cons, "8/Invitacion Aceptada");
+                  // AddPlayerToRoom(room, jugador, inv_socket);
+                   // enviar_info_jugadores_de_sala(room, sock_conn);
+                    //enviar_info_jugadores_sala_login(sock_conn);
                     accept = 0;
                 } else {
                     strcpy(buff_cons, "8/Invitacion Denegada");
@@ -853,4 +858,19 @@ void enviar_info_jugadores_de_sala(int room, int sock) {
         }
     }
     pthread_mutex_unlock(&mutex);
+}
+
+void enviar_info_jugadores_sala_login(int sock_conn){
+
+    char buffer_temp[MAX_BUFF];
+    int NumPlayersInSala[4] = {0};
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < 4; i++){
+        NumPlayersInSala[i] = list_rooms.rooms[i].num_players;
+    }
+    pthread_mutex_unlock(&mutex);
+    snprintf(buffer_temp, MAX_BUFF, "13/%d/%d/%d/%d", NumPlayersInSala[0], NumPlayersInSala[1], NumPlayersInSala[2], NumPlayersInSala[3] );
+        if (write(sock_conn, buffer_temp, strlen(buffer_temp)) < 0) {
+            perror("Error al enviar info a cliente");
+        }
 }
