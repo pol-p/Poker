@@ -161,3 +161,23 @@ Como siempre, seguimos trabajando en la optimización de nuestro código para as
 La experiencia de Poker Showdown nunca ha sido tan emocionante. Únete a una sala con tus amigos, charla en el chat global y prepárate para las partidas más intensas y divertidas. ¡Esto solo es el comienzo de lo que tenemos preparado para ti! 🍀
 
 Gracias por seguir siendo parte de Poker Showdown. Cada paso que damos es gracias a ti, ¡y no podemos esperar a compartir la próxima actualización! 🚀
+
+**Tabla Protocolo**
+
+| Código | Mensaje enviado por el cliente                            | Respuesta del servidor                                                      | Descripción                                                                 |
+| ------ | --------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 0      | `0/`                                                    | `0/Saliendo...`                                                             | Desconexión. El cliente solicita cerrar la conexión.                       |
+| 1      | `1/{nombre}/{email}/{contrasena}`                         | `1/[*] Usuario creado con exito` <br> ó <br> `1/ERROR: el usuario ya existe` | Registro de un nuevo usuario. El servidor verifica si ya existe y crea el usuario. |
+| 2      | `2/{nombre}/{contrasena}`                                 | `2/[*] Login con exito` <br> ó <br> `2/ERROR: Contrasena o usuario incorrecto` | Inicio de sesion. Se autentica el usuario.                                  |
+| 3      | `3/`                                                    | `3/Usuarios: {lista_de_usuarios}`                                           | Solicitud de la lista de usuarios en la base de datos.                      |
+| 4      | `4/`                                                    | `4/El Top1 es: {nombre}`                                                    | Solicitud del usuario con mayor saldo (u otro criterio).                    |
+| 5      | `5/`                                                    | `5/La lista es: {lista_de_conectados}`                                      | Solicitud de la lista de usuarios conectados.                             |
+| 6      | `6/{nombre_jugador}/{numeroSala}`                         | `9/El Cliente {miNombre} te ha invitado a jugar-{miNombre}`                  | Invitacion para jugar; el cliente invita a otro usuario.                    |
+| 7      | `7/1/{nombre_jugador}` o `7/0/{nombre_jugador}`           | `8/Invitacion Aceptada` ó `8/Invitacion Denegada`                           | Respuesta a una invitacion: 1 para aceptar y 0 para denegar.                  |
+| 8      | `8/{numeroSala}`                                         | `10/{numeroSala}/{nueva_capacidad}`                                         | Unirse a una sala. El servidor agrega al usuario y responde la capacidad actual. |
+| 9      | `9/{nombre}`                                             | `12/{numeroSala}/{numeroJugadores}`                                         | Salida de la sala. El servidor actualiza el estado de la sala.              |
+| 10     | `10/{mensaje}/{numeroSala}`                              | `13/{mensaje}/{numeroSala}`                                                 | Mensaje o notificacion relacionado con la sala.                           |
+| 11     | *(Pendiente)*                                            | *(Pendiente)*                                                               | Reservado para futuras funcionalidades.                                   |
+| 12     | *(Utilizado internamente en algunas respuestas)*         | `12/{numeroSala}/{numeroJugadores}`                                         | Actualizacion del estado de la sala (protocolo interno).                     |
+| 13     | *(Utilizado internamente en algunas respuestas)*         | `13/{valor1}/{valor2}/{valor3}/{valor4}`                                     | Envia informacion sobre las salas (por ejemplo, numeros de jugadores).      |
+
