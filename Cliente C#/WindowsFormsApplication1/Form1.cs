@@ -20,9 +20,11 @@ namespace WindowsFormsApplication1
         List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 9001;
+        int PORT = 9003;
         bool conectado = false;
         int room_num;
+        int room_join;
+        bool aceptar;
 
         string prueba;
         public Form1()
@@ -44,6 +46,12 @@ namespace WindowsFormsApplication1
             {
                 try
                 {
+                    byte[] msg = new byte[1024];
+                    server.Receive(msg);
+                    string[] trozos = Encoding.ASCII.GetString(msg).Split('/');
+                    int codigo = Convert.ToInt32(trozos[0]);
+                    string mensaje = trozos[1].Split('\0')[0];
+                    /*
                     byte[] msg2 = new byte[200];
                     int bytesRecibidos = server.Receive(msg2);
                     if (bytesRecibidos == 0)
@@ -54,10 +62,10 @@ namespace WindowsFormsApplication1
 
                     }
                     string bytes = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-                    string[] trozos = Encoding.ASCII.GetString(msg2).Split('/'); //Lo trozeo por barra
+                    string[] trozos = Encoding.ASCII.GetString(msg2).Split('\0')[0].Split('/'); //Lo trozeo por barra
                     int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
                     string mensaje = trozos[1];
-
+                    */
                     switch (codigo)
                     {
                         case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
@@ -119,8 +127,10 @@ namespace WindowsFormsApplication1
                             MessageBox.Show(mensaje);
                             break;
                         case 9: //Acceptar denegar invitacion
+                            aceptar = true;
                             string[] mg = mensaje.Split('-');
                             invitationPlayer = mg[1];
+                            room_num = Convert.ToInt16(mg[2].Split('\0')[0]);
                             MessageBox.Show(mensaje);
                             break;
 
@@ -130,7 +140,7 @@ namespace WindowsFormsApplication1
                             int numRoom = Convert.ToInt32(mensaje);
                             int numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
                             // Verificamos si la sala ya está abierta
-                            Room salaExistente = romms.FirstOrDefault(room => room.num_room == numRoom);
+                            Room salaExistente = romms.FirstOrDefault(room => room.getnumroom() == numRoom);
                            
                             if (salaExistente == null)
                             {
@@ -242,7 +252,7 @@ namespace WindowsFormsApplication1
         {
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse("192.168.1.133");
+            IPAddress direc = IPAddress.Parse("192.168.1.136");
             IPEndPoint ipep = new IPEndPoint(direc, PORT);
             
 
@@ -313,6 +323,7 @@ namespace WindowsFormsApplication1
             {
                 server.Shutdown(SocketShutdown.Both);
                 server.Close();
+                atender.Abort();
             }
             catch (Exception ex)
             {
@@ -368,7 +379,7 @@ namespace WindowsFormsApplication1
                 MessageBox.Show(selectedPlayerName);
             }
         }
-
+        
         private void Invitar_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(selectedPlayerName))
@@ -386,10 +397,18 @@ namespace WindowsFormsApplication1
 
         private void Aceptar_sol_Click(object sender, EventArgs e)
         {
+            if (aceptar)
+            {
+                string mensaje = $"8/{room_num}";
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
             //enviar
-            string mensaje = $"7/1/{invitationPlayer}"; // Aceptar Solicitud
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            //string mensaje = $"7/1/{invitationPlayer}"; // Aceptar Solicitud
+            //byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            //server.Send(msg);
+
+            aceptar = false;
         }
 
         private void Decline_sol_Click(object sender, EventArgs e)
@@ -403,6 +422,7 @@ namespace WindowsFormsApplication1
         private void JoinR1_btn_Click(object sender, EventArgs e)
         {
             string mensaje = "8/1";
+            room_num = 1;
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
 
@@ -411,6 +431,7 @@ namespace WindowsFormsApplication1
         private void JoinR2_btn_Click(object sender, EventArgs e)
         {
             string mensaje = "8/2";
+            room_num = 2;
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
         }
@@ -418,6 +439,7 @@ namespace WindowsFormsApplication1
         private void JoinR3_btn_Click(object sender, EventArgs e)
         {
             string mensaje = "8/3";
+            room_num = 3;
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
         }
@@ -425,6 +447,7 @@ namespace WindowsFormsApplication1
         private void JoinR4_btn_Click(object sender, EventArgs e)
         {
             string mensaje = "8/4";
+            room_num = 4;
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
         }
@@ -433,7 +456,8 @@ namespace WindowsFormsApplication1
         {
 
             Room room = new Room(/*this.usuario, this.room, server, trozos[3]*/);
-            romms.Add(room);
+            room.setserver(server);
+            room.setnumroom(room_num);
             Invitar.Enabled = true;
             //room.SetNombres(trozos, this.usuario);
             room.ShowDialog();
