@@ -14,7 +14,7 @@
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9002
+#define PORT 9003
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
@@ -224,7 +224,9 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
     int inv_socket = -1;
     unsigned int room = 0;
     unsigned int capacity;
+    unsigned int room_join;
     char mensaje[MAX_BUFF];
+
 
     token = strtok(buff_in, "/");
     if (!token) {
@@ -244,21 +246,21 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
         case 1:  // Registro
             token = strtok(NULL, "/");
             if (token == NULL) {
-                strcpy(buff_out, "Introduce el nombre");
+                strcpy(buff_out, "1/Introduce el nombre");
                 break;
             }
             strcpy(name, token);
 
             token = strtok(NULL, "/");
             if (token == NULL) {
-                strcpy(buff_out, "Introduce el email");
+                strcpy(buff_out, "1/Introduce el email");
                 break;
             }
             strcpy(email, token);
 
             token = strtok(NULL, "/");
             if (token == NULL) {
-                strcpy(buff_out, "Introduce la Password");
+                strcpy(buff_out, "1/Introduce la Password");
                 break;
             }
             strcpy(passwd, token);
@@ -279,6 +281,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     }
                 }
             }
+            printf("%s", buff_out);
             break;
         
         case 2:  // Login
@@ -353,6 +356,14 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 break;
             }
             strcpy(jugador, token);
+
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "Introduce la sala");
+                break;
+            }
+            room_join = atoi(token);
+            
             inv_socket = searchsocket(jugador);
             if (inv_socket == -1) {
                 snprintf(buff_out, sizeof(buff_out), "100/Error: Jugador %s no encontrado", jugador);
@@ -360,7 +371,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             }
             {
                 char buff_cons[MAX_BUFF];
-                snprintf(buff_cons, MAX_BUFF, "9/El Cliente %s te ha invitado a jugar-%s", client->name, client->name); 
+                snprintf(buff_cons, MAX_BUFF, "9/El Cliente %s te ha invitado a jugar-%s-%d", client->name, client->name, room_join); 
                 if (write(inv_socket, buff_cons, strlen(buff_cons)) < 0) {
                     perror("[!] Error al enviar invitacion");
                     snprintf(buff_out, sizeof(buff_out), "100/Error al enviar solicitud a %s", jugador);
@@ -578,7 +589,7 @@ void sigint_handler(int sig) {
     printf("\n[!] Cerrando servidor...\n");
 
     pthread_mutex_lock(&mutex);
-    for (int i = 0; i < connected_clients.count; i++) {
+    for (int i = 0; i < connected_clients.capacity; i++) {
         if (connected_clients.clients[i] != NULL) {
             close(connected_clients.clients[i]->sock_conn);
             free(connected_clients.clients[i]->cli_ip);
@@ -589,6 +600,7 @@ void sigint_handler(int sig) {
     connected_clients.clients = NULL;
     connected_clients.capacity = 0;
     connected_clients.count = 0;
+    memset(&list_rooms, 0, sizeof(list_rooms));
     pthread_mutex_unlock(&mutex);
 
     printf("[!] Recursos liberados correctamente. Saliendo...\n");
