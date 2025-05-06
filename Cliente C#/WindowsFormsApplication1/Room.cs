@@ -24,7 +24,7 @@ namespace WindowsFormsApplication1
 
         private void Room_Load(object sender, EventArgs e)
         {
-
+            NumFormlbl.Text = num_room.ToString();
         }
 
         private void Close_btn_Click(object sender, EventArgs e)
@@ -51,6 +51,18 @@ namespace WindowsFormsApplication1
             return num_room;
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string msg_chat = txtbox_chat.Text;
+            string msg = $"10/{this.num_room}/{msg_chat}";
+            byte[] msg_fial = System.Text.Encoding.ASCII.GetBytes(msg);
 
+            serverform.Send(msg_fial);
+        }
+
+        public void set_msg_chat(string mensaje)
+        {
+            listbox_chat.Items.Add(mensaje);
+        }
     }
 }

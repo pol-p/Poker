@@ -20,10 +20,9 @@ namespace WindowsFormsApplication1
         List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 9003;
+        int PORT = 9001;
         bool conectado = false;
         int room_num;
-        int room_join;
         bool aceptar;
 
         string prueba;
@@ -46,12 +45,7 @@ namespace WindowsFormsApplication1
             {
                 try
                 {
-                    byte[] msg = new byte[1024];
-                    server.Receive(msg);
-                    string[] trozos = Encoding.ASCII.GetString(msg).Split('/');
-                    int codigo = Convert.ToInt32(trozos[0]);
-                    string mensaje = trozos[1].Split('\0')[0];
-                    /*
+                    
                     byte[] msg2 = new byte[200];
                     int bytesRecibidos = server.Receive(msg2);
                     if (bytesRecibidos == 0)
@@ -65,7 +59,8 @@ namespace WindowsFormsApplication1
                     string[] trozos = Encoding.ASCII.GetString(msg2).Split('\0')[0].Split('/'); //Lo trozeo por barra
                     int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
                     string mensaje = trozos[1];
-                    */
+
+
                     switch (codigo)
                     {
                         case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
@@ -141,7 +136,7 @@ namespace WindowsFormsApplication1
                             int numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
                             // Verificamos si la sala ya está abierta
                             Room salaExistente = romms.FirstOrDefault(room => room.getnumroom() == numRoom);
-                           
+
                             if (salaExistente == null)
                             {
                                 // Si no existe, es un nuevo jugador uniéndose
@@ -172,8 +167,10 @@ namespace WindowsFormsApplication1
                             }
                             else
                             {
-                                // Si ya existe, simplemente actualizamos los nombres en la sala
-                                //salaExistente.SetNombres(trozos, this.usuario);
+                                /*Room nuevasala = romms.FirstOrDefault(room => room.getnumroom() == numRoom);
+                                nuevasala.setnumroom(numRoom);
+                                nuevasala.setserver(server);
+                                nuevasala.ShowDialog();*/
                             }
                             break;
                         case 11:
@@ -227,10 +224,33 @@ namespace WindowsFormsApplication1
                                     Room3_label.Text = $"{trozos[3]}/4 Room 3";
                                     Room4_label.Text = $"{trozos[4].Split('\0')[0]}/4 Room 4";
                             break;
+
+                        case 14:
+                                            
+                            int numero_room = Convert.ToInt32(trozos[1]);
+                            MessageBox.Show("" + numero_room);
+                                                         
+                            switch (numero_room)
+                            {
+                                case 1:
+                                    romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_chat(trozos[2]);
+                                    break;
+                                case 2:
+                                    romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_chat(trozos[2]);
+                                    break;
+                                case 3:
+                                    romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_chat(trozos[2]);
+                                    break;
+                                case 4:
+                                    romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_chat(trozos[2]);
+                                    break;
+                            }
+                        break;
                         default:
                             MessageBox.Show("Error");
                             break;
                     }
+
                         
                 }
                 catch (SocketException ex)
@@ -458,8 +478,8 @@ namespace WindowsFormsApplication1
             Room room = new Room(/*this.usuario, this.room, server, trozos[3]*/);
             room.setserver(server);
             room.setnumroom(room_num);
+            romms.Add(room);
             Invitar.Enabled = true;
-            //room.SetNombres(trozos, this.usuario);
             room.ShowDialog();
 
         }
