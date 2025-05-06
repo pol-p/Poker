@@ -44,12 +44,12 @@ typedef struct {
 // Estructura para representar una sala y sus jugadores
 typedef struct {
     unsigned int num_players; // Numero actual de jugadores en la sala
-    Player players[4];        // Maximo 4 jugadores por sala
+    Player players[3];        // Maximo 4 jugadores por sala
 } Room;
 
 // Estructura para manejar la lista de salas
 typedef struct {
-    Room rooms[4];  // Maximo 4 salas
+    Room rooms[3];  // Maximo 4 salas
 } ListaRooms;
 
 // Variables globales (idealmente se encapsularian en modulos separados)
@@ -483,6 +483,11 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     strcpy(buff_out, buff_cons);
                 }
             }
+            if (write(sock_conn, buff_out, strlen(buff_out)) < 0) {
+                perror("Error al escribir en el socket");
+            }
+                return 1;
+    
             break;
         }
         
@@ -492,16 +497,19 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 strcpy(buff_out, "100/Error formato");
                 break;
             }
-            strcpy(mensaje, token);
+            room = atoi(token);
+
             token = strtok(NULL, "/");
             if (token == NULL) {
                 strcpy(buff_out, "100/Error formato");
                 break;
             }
-            room = atoi(token);
+            strcpy(mensaje, token);
+            
+            eniviar_mensaje_chat(room, mensaje);
             {
                 char buff_cons[MAX_BUFF];
-                snprintf(buff_cons, MAX_BUFF, "13/%s/%d", mensaje, room);
+                snprintf(buff_cons, MAX_BUFF, "1/%s/%d", mensaje, room);
                 strcpy(buff_out, buff_cons);
             }
             break;
@@ -836,5 +844,13 @@ void enviar_info_jugadores_sala_login(int sock_conn) {
     snprintf(buffer_temp, MAX_BUFF, "13/%d/%d/%d/%d", NumPlayersInSala[0], NumPlayersInSala[1], NumPlayersInSala[2], NumPlayersInSala[3]);
     if (write(sock_conn, buffer_temp, strlen(buffer_temp)) < 0) {
         perror("Error al enviar info a cliente");
+    }
+}
+eniviar_mensaje_chat(int room, char* mensaje){
+    Room r = list_rooms.rooms[room - 1];
+    for (int i = 0; i < r.num_players; i++){
+        if (write(r.players[i].sock_conn, mensaje, strlen(mensaje)) < 0) {
+            perror("Error al enviar info a cliente");
+        }
     }
 }
