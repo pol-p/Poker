@@ -14,7 +14,7 @@
 
 #define MAX_BUFF 512
 #define MAX_SIZE 1024 
-#define PORT 9003
+#define PORT 9001
 #define HOST "127.0.0.1"
 #define USUARIO "usr"
 #define PASSWD "$usrMYSQL123"
@@ -76,6 +76,7 @@ unsigned int AddPlayerToRoom(int num_room, char *name, int sock_conn);  // Agreg
 unsigned int DelPlayerInSala(char* name, int room_num, int socket);  // Elimina a un jugador de una sala
 void enviar_info_jugadores_de_sala(int room, int sock);  // Envia la informacion de una sala a los clientes
 void enviar_info_jugadores_sala_login(int sock_conn);  // Envia al cliente la informacion de las salas al realizar login
+void eniviar_mensaje_chat(int room, char* mensaje);
 
 // Funcion principal del servidor
 int main(int argc, char **argv) {
@@ -483,10 +484,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     strcpy(buff_out, buff_cons);
                 }
             }
-            if (write(sock_conn, buff_out, strlen(buff_out)) < 0) {
-                perror("Error al escribir en el socket");
-            }
-                return 1;
     
             break;
         }
@@ -525,7 +522,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             snprintf(buff_out, sizeof(buff_out), "Modo no reconocido.\n");
             break;
     }
-    
+    printf("El servidor envia: %s\n", buff_out);
     if (write(sock_conn, buff_out, strlen(buff_out)) < 0) {
          perror("Error al escribir en el socket");
          return 1;
@@ -597,7 +594,7 @@ void sigint_handler(int sig) {
     printf("\n[!] Cerrando servidor...\n");
 
     pthread_mutex_lock(&mutex);
-    for (int i = 0; i < connected_clients.capacity; i++) {
+    for (int i = 0; i < connected_clients.count; i++) {
         if (connected_clients.clients[i] != NULL) {
             close(connected_clients.clients[i]->sock_conn);
             free(connected_clients.clients[i]->cli_ip);
@@ -846,11 +843,17 @@ void enviar_info_jugadores_sala_login(int sock_conn) {
         perror("Error al enviar info a cliente");
     }
 }
-eniviar_mensaje_chat(int room, char* mensaje){
+void eniviar_mensaje_chat(int room, char* mensaje){
+    char buffer_temp[MAX_BUFF];
+    pthread_mutex_lock(&mutex);
     Room r = list_rooms.rooms[room - 1];
     for (int i = 0; i < r.num_players; i++){
-        if (write(r.players[i].sock_conn, mensaje, strlen(mensaje)) < 0) {
+        printf("El mensaje se ha enviado a %s\n", r.players[i].name);
+        snprintf(buffer_temp, MAX_BUFF, "14/%d/%s", room, mensaje);
+        printf("%s", buffer_temp);
+        if (write(r.players[i].sock_conn, buffer_temp, strlen(buffer_temp)) < 0) {
             perror("Error al enviar info a cliente");
         }
     }
+    pthread_mutex_unlock(&mutex);
 }
