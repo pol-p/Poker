@@ -12,13 +12,13 @@
 #include <pthread.h>
 #include <signal.h>
 
-#define MAX_BUFF 512
+#define MAX_BUFF 1024
 #define MAX_SIZE 1024 
-#define PORT 9001
-#define HOST "127.0.0.1"
-#define USUARIO "usr"
-#define PASSWD "$usrMYSQL123"
-#define DATABASE "Poker"
+#define PORT 50044
+#define HOST "shiva2.upc.es"
+#define USUARIO "root"
+#define PASSWD "mysql"
+#define DATABASE "M9_Poker"
 
 // Estructura para almacenar informacion de cada cliente
 typedef struct {
@@ -44,12 +44,12 @@ typedef struct {
 // Estructura para representar una sala y sus jugadores
 typedef struct {
     unsigned int num_players; // Numero actual de jugadores en la sala
-    Player players[3];        // Maximo 4 jugadores por sala
+    Player players[4];        // Maximo 4 jugadores por sala
 } Room;
 
 // Estructura para manejar la lista de salas
 typedef struct {
-    Room rooms[3];  // Maximo 4 salas
+    Room rooms[4];  // Maximo 4 salas
 } ListaRooms;
 
 // Variables globales (idealmente se encapsularian en modulos separados)
@@ -268,7 +268,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
 
             {
                 char buff_cons[MAX_BUFF];
-                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores WHERE nombre = '%s'", name);
+                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM Jugadores WHERE nombre = '%s'", name);
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
                 if (strlen(consulta) > 0) {
                     snprintf(buff_out, sizeof(buff_out), "1/ERROR: el usuario ya existe");
@@ -793,7 +793,7 @@ unsigned int AddPlayerToRoom(int num_room, char *name, int sock_conn) {
 unsigned int DelPlayerInSala(char* name, int room_num, int socket) {
     pthread_mutex_lock(&mutex);
     unsigned int target = 5;
-    for (int i = 0; i < list_rooms.rooms[room_num - 1].num_players; i++) {
+    for (unsigned int i = 0; i < list_rooms.rooms[room_num - 1].num_players; i++) {
         if (strcmp(list_rooms.rooms[room_num - 1].players[i].name, name) == 0) {
             target = i;
             break;
@@ -804,7 +804,7 @@ unsigned int DelPlayerInSala(char* name, int room_num, int socket) {
         pthread_mutex_unlock(&mutex);
         return 5;
     }
-    for (int i = target; i < list_rooms.rooms[room_num - 1].num_players - 1; i++) {
+    for (unsigned int i = target; i < list_rooms.rooms[room_num - 1].num_players - 1; i++) {
         list_rooms.rooms[room_num - 1].players[i] = list_rooms.rooms[room_num - 1].players[i + 1];
     }
     list_rooms.rooms[room_num - 1].num_players--;

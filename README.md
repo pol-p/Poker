@@ -155,7 +155,7 @@ Como siempre, seguimos trabajando en la optimización de nuestro código para as
 - **Mejoras en la interfaz de usuario**: Trabajamos en una experiencia más atractiva y sencilla de usar. ¡Queremos que Poker Showdown sea fácil de jugar para todos! 🎨
 
 🎥 **Mira el video de la versión 5.0 aquí:**  
-🔗 [Ver video de la versión 5.0](https://youtu.be/D3oewoOQXkA?feature=shared) 🔗
+🔗 [Ver video de la versión 5.0](https://www.youtube.com/watch?v=NzdSS_jic4o) 🔗
 
 🏆 **¿Listo para unirte?**  
 La experiencia de Poker Showdown nunca ha sido tan emocionante. Únete a una sala con tus amigos, charla en el chat global y prepárate para las partidas más intensas y divertidas. ¡Esto solo es el comienzo de lo que tenemos preparado para ti! 🍀
