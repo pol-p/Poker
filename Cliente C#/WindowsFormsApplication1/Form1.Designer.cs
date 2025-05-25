@@ -57,6 +57,7 @@
             this.JoinR4_btn = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.btn_EliminarCuenta = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -350,11 +351,23 @@
             this.textBox1.TabIndex = 31;
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
+            // btn_EliminarCuenta
+            // 
+            this.btn_EliminarCuenta.Location = new System.Drawing.Point(134, 262);
+            this.btn_EliminarCuenta.Margin = new System.Windows.Forms.Padding(2);
+            this.btn_EliminarCuenta.Name = "btn_EliminarCuenta";
+            this.btn_EliminarCuenta.Size = new System.Drawing.Size(99, 40);
+            this.btn_EliminarCuenta.TabIndex = 32;
+            this.btn_EliminarCuenta.Text = "Eliminar Cuenta";
+            this.btn_EliminarCuenta.UseVisualStyleBackColor = true;
+            this.btn_EliminarCuenta.Click += new System.EventHandler(this.btn_EliminarCuenta_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(915, 508);
+            this.Controls.Add(this.btn_EliminarCuenta);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.JoinR4_btn);
@@ -424,6 +437,7 @@
         private System.Windows.Forms.Button JoinR4_btn;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button btn_EliminarCuenta;
     }
 }
 

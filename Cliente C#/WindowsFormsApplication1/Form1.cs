@@ -20,7 +20,7 @@ namespace WindowsFormsApplication1
         List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 50044;
+        int PORT = 50043;
         bool conectado = false;
         int room_num;
         bool aceptar;
@@ -272,7 +272,7 @@ namespace WindowsFormsApplication1
         {
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse("10.4.119.5");
+            IPAddress direc = IPAddress.Parse("172.23.240.236");
             IPEndPoint ipep = new IPEndPoint(direc, PORT);
             
 
@@ -492,6 +492,13 @@ namespace WindowsFormsApplication1
         private void button3_Click(object sender, EventArgs e)
         {
             string mensaje = $"9/{textBox1.Text}";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+
+        private void btn_EliminarCuenta_Click(object sender, EventArgs e)
+        {
+            string mensaje = $"11/{contraseña.Text}";
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
         }
