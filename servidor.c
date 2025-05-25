@@ -14,11 +14,11 @@
 
 #define MAX_BUFF 1024
 #define MAX_SIZE 1024 
-#define PORT 50044
-#define HOST "shiva2.upc.es"
-#define USUARIO "root"
-#define PASSWD "mysql"
-#define DATABASE "M9_Poker"
+#define PORT 50043
+#define HOST "localhost"
+#define USUARIO "usr"
+#define PASSWD "1234"
+#define DATABASE "Poker"
 
 // Estructura para almacenar informacion de cada cliente
 typedef struct {
@@ -302,7 +302,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
 
             {
                 char buff_cons[MAX_BUFF];
-                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores WHERE nombre = '%s' and passwd = '%s'", name, passwd);
+                snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM Jugadores WHERE nombre = '%s' and passwd = '%s'", name, passwd);
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
                 if (strlen(consulta) > 0) {
                     strcpy(buff_out, "2/[*] Login con exito");
@@ -316,7 +316,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
         
         case 3: {
             char buff_cons[MAX_BUFF];
-            snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores");
+            snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM Jugadores");
             ejecutar_consulta(conn, buff_cons, consulta, &err);
             if (strlen(consulta) > 0) {
                 snprintf(buff_cons, MAX_BUFF, "3/Usuarios: %s ", consulta);
@@ -329,7 +329,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
         
         case 4: {
             char buff_cons[MAX_BUFF];
-            snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM jugadores ORDER BY saldo DESC LIMIT 1");
+            snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM Jugadores ORDER BY saldo DESC LIMIT 1");
             ejecutar_consulta(conn, buff_cons, consulta, &err);
             if (strlen(consulta) > 0) {
                 snprintf(buff_cons, MAX_BUFF, "4/El Top1 es: %s ", consulta);
@@ -512,8 +512,31 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             break;
         }
         
-        case 11: {
-            // Espacio reservado para futuros modos
+        case 11: { // Darse de baja del servidor
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "100/Error formato");
+                break;
+            }
+            strcpy(passwd, token);
+            {
+                char buff_cons[MAX_BUFF];
+                snprintf(buff_cons, MAX_BUFF, "SELECT passwd FROM Jugadores WHERE nombre = '%s'", client->name);
+                ejecutar_consulta(conn, buff_cons, consulta, &err);
+                printf("%s", consulta); // DEBUG
+                if(strcmp(consulta, passwd) != 0){
+                    snprintf(buff_out, sizeof(buff_out), "1/ERROR: Contraseña incorrecta");
+                }
+                else{
+                    snprintf(buff_cons, MAX_BUFF, "DELETE FROM Jugadores WHERE nombre='%s'", name);
+                    if (mysql_query(conn, buff_cons)) { 
+                        printf("Error al insertar nuevo usuario: %s\n", mysql_error(conn));
+                        strcpy(buff_out, "1/ERROR: el usuario no se ha podido borrar");
+                    } else {
+                        strcpy(buff_out, "1/[!] Usuario Eliminado con exito");
+                    }
+                }
+            }
             break;
         }
         
