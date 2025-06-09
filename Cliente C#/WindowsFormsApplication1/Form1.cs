@@ -63,6 +63,12 @@ namespace WindowsFormsApplication1
 
                     switch (codigo)
                     {
+                        case 0:
+                            // Mensaje de desconexión del servidor
+                            MessageBox.Show(mensaje); // Mostrará "Saliendo..."
+                            conectado = false;
+                            break;
+                        
                         case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
 
                             MessageBox.Show(mensaje);
@@ -324,9 +330,7 @@ namespace WindowsFormsApplication1
 
         private void Desconectar_Click(object sender, EventArgs e)
         {
-
             string mensaje = "0/";
-
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             try
             {
@@ -336,14 +340,20 @@ namespace WindowsFormsApplication1
             {
                 MessageBox.Show(ex.ToString());
             }
-            // Nos desconectamos
+
             this.BackColor = Color.Gray;
             conectado = false;
+
+            // Espera a que el hilo termine antes de cerrar el socket
+            if (atender != null && atender.IsAlive)
+            {
+                atender.Join();
+            }
+
             try
             {
                 server.Shutdown(SocketShutdown.Both);
                 server.Close();
-                atender.Abort();
             }
             catch (Exception ex)
             {
