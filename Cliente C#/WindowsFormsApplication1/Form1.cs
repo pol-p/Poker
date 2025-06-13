@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Diagnostics.Contracts;
 
 namespace WindowsFormsApplication1
 {
@@ -24,6 +25,7 @@ namespace WindowsFormsApplication1
         bool conectado = false;
         int room_num;
         bool aceptar;
+        bool con = false;
 
         string prueba;
         public Form1()
@@ -45,7 +47,7 @@ namespace WindowsFormsApplication1
             {
                 try
                 {
-                    
+                   // mensaje = "";
                     byte[] msg2 = new byte[200];
                     int bytesRecibidos = server.Receive(msg2);
                     if (bytesRecibidos == 0)
@@ -224,11 +226,10 @@ namespace WindowsFormsApplication1
                             }
                             break;
                         case 13:
- 
                                     Room1_label.Text = $"{trozos[1]}/4 Room 1";
                                     Room2_label.Text = $"{trozos[2]}/4 Room 2";
                                     Room3_label.Text = $"{trozos[3]}/4 Room 3";
-                                    Room4_label.Text = $"{trozos[4].Split('\0')[0]}/4 Room 4";
+                                    Room4_label.Text = $"{trozos[4].Split('\0')[0][0]}/4 Room 4";
                             break;
 
                         case 14:
@@ -289,6 +290,7 @@ namespace WindowsFormsApplication1
                 server.Connect(ipep);//Intentamos conectar el socket
                 this.BackColor = Color.Green;
                 MessageBox.Show("Conectado");
+                con = true;
 
             }
             catch (SocketException ex)
@@ -302,63 +304,92 @@ namespace WindowsFormsApplication1
 
         // Botón para registrar
         private void buttonRegister_Click_1(object sender, EventArgs e)
-        { 
-            //enviar
-            string mensaje = "1/" + nombre.Text + "/" + email.Text + "/" + contraseña.Text; //REGISTER
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+        {
+            if (con)
+            {
+                //enviar
+                string mensaje = "1/" + nombre.Text + "/" + email.Text + "/" + contraseña.Text; //REGISTER
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
 
-            //repsuesta
+                //repsuesta
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
            
         }
 
         // Botón para iniciar sesión
         private void buttonLogin_Click_1(object sender, EventArgs e)
         {
-            //enviar
-            string mensaje = "2/" + nombre.Text + "/" + contraseña.Text; // LOGIN
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                //enviar
+                string mensaje = "2/" + nombre.Text + "/" + contraseña.Text; // LOGIN
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
 
-           
-            conectado = true;
 
-            ThreadStart ts = delegate { AtenderServidor(); };
-            atender = new Thread(ts);
-            atender.Start();
+                conectado = true;
+
+                ThreadStart ts = delegate { AtenderServidor(); };
+                atender = new Thread(ts);
+                atender.Start();
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
         }
 
         private void Desconectar_Click(object sender, EventArgs e)
         {
-            string mensaje = "0/";
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            try
-            {
-                server.Send(msg);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
+            if (con){
+                string mensaje = "0/";
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                try
+                {
+                    server.Send(msg);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
 
-            this.BackColor = Color.Gray;
-            conectado = false;
+                this.BackColor = Color.Gray;
+                conectado = false;
 
-            // Espera a que el hilo termine antes de cerrar el socket
-            if (atender != null && atender.IsAlive)
-            {
-                atender.Join();
-            }
+                // Limpia el DataGridView para que no de error al desconexión
+                this.Invoke((MethodInvoker)delegate {
+                    dataGridView1.DataSource = null;
+                    dataGridView1.Rows.Clear();
+                    dataGridView1.Refresh();
+                });
 
-            try
-            {
-                server.Shutdown(SocketShutdown.Both);
-                server.Close();
+                // Espera a que el hilo termine antes de cerrar el socket
+                if (atender != null && atender.IsAlive)
+                {
+                    atender.Join();
+                }
+
+                try
+                {
+                    server.Shutdown(SocketShutdown.Both);
+                    server.Close();
+                    con = false;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error al cerrar: " + ex.Message);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show("Error al cerrar: " + ex.Message);
+                MessageBox.Show("No estás conectado al servidor.");
             }
+           
         }
 
         private void label3_Click(object sender, EventArgs e)
@@ -373,30 +404,48 @@ namespace WindowsFormsApplication1
 
         private void Users_Click(object sender, EventArgs e)
         {
-            //enviar
-            string mensaje = "3/"; // LISTA USUARIOS
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
-
+            if (con) {
+                //enviar
+                string mensaje = "3/"; // LISTA USUARIOS
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
             
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            //enviar
-            string mensaje = "4/"; // TOP 1
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                //enviar
+                string mensaje = "4/"; // TOP 1
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
 
         }
 
         private void button2_Click_1(object sender, EventArgs e)
         {
-            //enviar
-            string mensaje = "5/"; // LISTA USUARIOS
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
-
+            if (con)
+            {
+                //enviar
+                string mensaje = "5/"; // LISTA USUARIOS
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
        
         }
 
@@ -443,43 +492,77 @@ namespace WindowsFormsApplication1
 
         private void Decline_sol_Click(object sender, EventArgs e)
         {
-            //enviar
-            string mensaje = $"7/0/{invitationPlayer}"; // Denegar Solicitud
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                //enviar
+                string mensaje = $"7/0/{invitationPlayer}"; // Denegar Solicitud
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+               MessageBox.Show("No estás conectado al servidor.");
+            }
         }
 
         private void JoinR1_btn_Click(object sender, EventArgs e)
         {
-            string mensaje = "8/1";
-            room_num = 1;
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
-
+            if (con)
+            {
+                string mensaje = "8/1";
+                room_num = 1;
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
         }
 
         private void JoinR2_btn_Click(object sender, EventArgs e)
         {
-            string mensaje = "8/2";
-            room_num = 2;
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                string mensaje = "8/2";
+                room_num = 2;
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
         }
 
         private void JoinR3_btn_Click(object sender, EventArgs e)
         {
-            string mensaje = "8/3";
-            room_num = 3;
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                string mensaje = "8/3";
+                room_num = 3;
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
         }
 
         private void JoinR4_btn_Click(object sender, EventArgs e)
         {
-            string mensaje = "8/4";
-            room_num = 4;
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                string mensaje = "8/4";
+                room_num = 4;
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
         }
 
         private void CreateGame(string[] trozos)
@@ -494,23 +577,18 @@ namespace WindowsFormsApplication1
 
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            string mensaje = $"9/{textBox1.Text}";
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
-        }
-
         private void btn_EliminarCuenta_Click(object sender, EventArgs e)
         {
-            string mensaje = $"11/{contraseña.Text}";
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (con)
+            {
+                string mensaje = $"11/{contraseña.Text}";
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else{
+                MessageBox.Show("No estás conectado al servidor.");
+            }
+           
         }
     }
 }

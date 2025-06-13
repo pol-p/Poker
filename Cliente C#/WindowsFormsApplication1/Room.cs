@@ -24,6 +24,12 @@ namespace WindowsFormsApplication1
 
         private void Room_Load(object sender, EventArgs e)
         {
+            // Quitar los botones de minimizar y maximizar
+            this.MinimizeBox = false;
+            this.MaximizeBox = false;
+            // Quitar el botón de cerrar (X) y la barra de control
+            this.ControlBox = false;
+
             NumFormlbl.Text = num_room.ToString();
         }
 
@@ -53,10 +59,11 @@ namespace WindowsFormsApplication1
 
         private void button1_Click(object sender, EventArgs e)
         {
+
             string msg_chat = txtbox_chat.Text;
             string msg = $"10/{this.num_room}/{msg_chat}";
             byte[] msg_fial = System.Text.Encoding.ASCII.GetBytes(msg);
-
+            txtbox_chat.Clear();
             serverform.Send(msg_fial);
         }
 

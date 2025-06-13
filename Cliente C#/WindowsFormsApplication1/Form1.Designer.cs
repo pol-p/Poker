@@ -55,8 +55,6 @@
             this.JoinR2_btn = new System.Windows.Forms.Button();
             this.JoinR3_btn = new System.Windows.Forms.Button();
             this.JoinR4_btn = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
             this.btn_EliminarCuenta = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -332,25 +330,6 @@
             this.JoinR4_btn.UseVisualStyleBackColor = true;
             this.JoinR4_btn.Click += new System.EventHandler(this.JoinR4_btn_Click);
             // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(744, 423);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(61, 34);
-            this.button3.TabIndex = 30;
-            this.button3.Text = "button3";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(531, 431);
-            this.textBox1.Margin = new System.Windows.Forms.Padding(2);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(192, 20);
-            this.textBox1.TabIndex = 31;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
-            // 
             // btn_EliminarCuenta
             // 
             this.btn_EliminarCuenta.Location = new System.Drawing.Point(134, 262);
@@ -368,8 +347,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(915, 508);
             this.Controls.Add(this.btn_EliminarCuenta);
-            this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.button3);
             this.Controls.Add(this.JoinR4_btn);
             this.Controls.Add(this.JoinR3_btn);
             this.Controls.Add(this.JoinR2_btn);
@@ -435,8 +412,6 @@
         private System.Windows.Forms.Button JoinR2_btn;
         private System.Windows.Forms.Button JoinR3_btn;
         private System.Windows.Forms.Button JoinR4_btn;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button btn_EliminarCuenta;
     }
 }
