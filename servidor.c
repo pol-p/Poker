@@ -241,6 +241,10 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
         case 0:
             printf("Cliente con ip %s solicito salir.\n", client->cli_ip);
             snprintf(buff_out, sizeof(buff_out), "0/Saliendo...\n");
+            for (int k = 1; k <= 4; k++) {
+                 DelPlayerInSala(client->name, k, sock_conn);
+                 enviar_info_jugadores_de_sala(k, sock_conn);
+            }
             salir = 1;
             break;
         
@@ -738,6 +742,7 @@ void enviar_info_jugadores_en_linea() {
             }
         }
     }
+    printf("[*] Enviando lista de jugadores conectados: %s\n", buffer_temp); // DEBUG
     pthread_mutex_unlock(&mutex);
 }
 
