@@ -45,6 +45,7 @@ typedef struct {
 typedef struct {
     unsigned int num_players; // Numero actual de jugadores en la sala
     Player players[4];        // Maximo 4 jugadores por sala
+    int iniciada;             // Indica si la sala ha iniciado una partida (0=no, 1=sí)
 } Room;
 
 // Estructura para manejar la lista de salas
@@ -76,7 +77,11 @@ unsigned int AddPlayerToRoom(int num_room, char *name, int sock_conn);  // Agreg
 unsigned int DelPlayerInSala(char* name, int room_num, int socket);  // Elimina a un jugador de una sala
 void enviar_info_jugadores_de_sala(int room, int sock);  // Envia la informacion de una sala a los clientes
 void enviar_info_jugadores_sala_login(int sock_conn);  // Envia al cliente la informacion de las salas al realizar login
-void eniviar_mensaje_chat(int room, char* mensaje);
+void eniviar_mensaje_chat(int room, char* mensaje, char *name);  // Envia un mensaje de chat a todos los jugadores de una sala
+
+//FUNCIONES DE JUEGO
+int sala_tiene_min_jugadores(int num_room);  // Comprueba si una sala tiene al menos 2 jugadores para iniciar partida
+void enviar_mensaje_a_sala(int num_room, const char* mensaje);  // Envia un mensaje a todos los jugadores de una sala
 
 // Funcion principal del servidor
 int main(int argc, char **argv) {
@@ -228,7 +233,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
     unsigned int room_join;
     char mensaje[MAX_BUFF];
 
-
     token = strtok(buff_in, "/");
     if (!token) {
         strcpy(buff_out, "ERROR: Formato incorrecto");
@@ -241,9 +245,12 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
         case 0:
             printf("Cliente con ip %s solicito salir.\n", client->cli_ip);
             snprintf(buff_out, sizeof(buff_out), "0/Saliendo...\n");
+            // Eliminar al cliente de todas las salas en las que esté y notificar a todos los usuarios
             for (int k = 1; k <= 4; k++) {
-                 DelPlayerInSala(client->name, k, sock_conn);
-                 enviar_info_jugadores_de_sala(k, sock_conn);
+            // Si el cliente está en la sala k, lo elimina y notifica a todos
+            if (DelPlayerInSala(client->name, k, sock_conn) != 5) {
+                enviar_info_jugadores_de_sala(k, -1); // -1 para notificar a todos
+            }
             }
             salir = 1;
             break;
@@ -309,7 +316,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 snprintf(buff_cons, MAX_BUFF, "SELECT nombre FROM Jugadores WHERE nombre = '%s' and passwd = '%s'", name, passwd);
                 ejecutar_consulta(conn, buff_cons, consulta, &err);
                 if (strlen(consulta) > 0) {
-                    strcpy(buff_out, "2/[*] Login con exito");
+                    strcpy(buff_out, "2/1"); //LOGIN CON EXITO
                     set_client_name(client, name);
                     enviar_info_jugadores_en_linea();
                 } else {
@@ -507,10 +514,10 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             }
             strcpy(mensaje, token);
             
-            eniviar_mensaje_chat(room, mensaje);
+            eniviar_mensaje_chat(room, mensaje, client->name);
             {
                 char buff_cons[MAX_BUFF];
-                snprintf(buff_cons, MAX_BUFF, "1/%s/%d", mensaje, room);
+                snprintf(buff_cons, MAX_BUFF, "1/%s: %s/%d", client->name, mensaje, room);
                 strcpy(buff_out, buff_cons);
             }
             break;
@@ -541,6 +548,53 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     }
                 }
             }
+            break;
+        }
+
+        //CASES DEL JUEGO POKER
+
+        case 12: {
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "100/Error formato");
+                break;
+            }
+            room = atoi(token);
+            if (sala_tiene_min_jugadores(room - 1 )) {
+                // Insertar nueva partida
+                char consulta[256];
+                sprintf(consulta, "INSERT INTO Partidas (fecha) VALUES (NOW())");
+                int error = 0;
+                ejecutar_consulta(conn, consulta, buff_out, &error);
+
+                // Obtener el id de la última partida insertada
+                MYSQL_RES *res = mysql_store_result(conn);
+                int partida_id = (int)mysql_insert_id(conn);
+
+                // Insertar participaciones
+                Room *nroom = &list_rooms.rooms[room - 1];
+                for (unsigned int i = 0; i < nroom->num_players; i++) {
+                    sprintf(consulta,
+                        "INSERT INTO Participaciones (partida_id, jugador, resultado) VALUES (%d, '%s', NULL)",
+                        partida_id, nroom->players[i].name);
+                    ejecutar_consulta(conn, consulta, buff_out, &error);
+                }
+
+                // Marcar la sala como iniciada
+                nroom->iniciada = 1;
+
+                // Notificar a los clientes de la sala usando la función enviar_mensaje_a_sala
+                char mensaje[MAX_BUFF];
+                snprintf(mensaje, sizeof(mensaje), "15/%d/Partida iniciada por %s", room, client->name);
+                enviar_mensaje_a_sala(room - 1, mensaje);
+
+                snprintf(buff_out, sizeof(buff_out), "1/La sala %d tiene suficientes jugadores para iniciar la partida", room);
+            } 
+            
+            else {
+                snprintf(buff_out, sizeof(buff_out), "1/La sala %d no tiene suficientes jugadores para iniciar la partida", room);
+            }
+
             break;
         }
         
@@ -871,17 +925,35 @@ void enviar_info_jugadores_sala_login(int sock_conn) {
         perror("Error al enviar info a cliente");
     }
 }
-void eniviar_mensaje_chat(int room, char* mensaje){
+void eniviar_mensaje_chat(int room, char* mensaje, char *name){
     char buffer_temp[MAX_BUFF];
     pthread_mutex_lock(&mutex);
     Room r = list_rooms.rooms[room - 1];
     for (int i = 0; i < r.num_players; i++){
         printf("El mensaje se ha enviado a %s\n", r.players[i].name);
-        snprintf(buffer_temp, MAX_BUFF, "14/%d/%s", room, mensaje);
+        snprintf(buffer_temp, MAX_BUFF, "14/%d/%s: %s", room, name, mensaje);
         printf("%s", buffer_temp);
         if (write(r.players[i].sock_conn, buffer_temp, strlen(buffer_temp)) < 0) {
             perror("Error al enviar info a cliente");
         }
     }
     pthread_mutex_unlock(&mutex);
+}
+
+// Devuelve 1 si la sala tiene al menos 2 jugadores, 0 si no.
+int sala_tiene_min_jugadores(int num_room) {
+    if (num_room < 0 || num_room >= 4)
+        return 0;
+    return list_rooms.rooms[num_room].num_players >= 2;
+}
+
+// Envía un mensaje a todos los jugadores de la sala indicada
+void enviar_mensaje_a_sala(int num_room, const char* mensaje) {
+    if (num_room < 0 || num_room >= 4)
+        return;
+    Room *room = &list_rooms.rooms[num_room];
+    for (unsigned int i = 0; i < room->num_players; i++) {
+        int sock_jugador = room->players[i].sock_conn;
+        write(sock_jugador, mensaje, strlen(mensaje));
+    }
 }
