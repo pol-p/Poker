@@ -26,8 +26,6 @@ namespace WindowsFormsApplication1
         int room_num;
         bool aceptar;
         bool con = false;
-
-        string prueba;
         public Form1()
         {
             InitializeComponent();
@@ -61,6 +59,7 @@ namespace WindowsFormsApplication1
                     string[] trozos = Encoding.ASCII.GetString(msg2).Split('\0')[0].Split('/'); //Lo trozeo por barra
                     int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
                     string mensaje = trozos[1];
+                    int numero_room;
 
 
                     switch (codigo)
@@ -78,8 +77,12 @@ namespace WindowsFormsApplication1
 
                         case 2: //Respuesta del servidor a si mi nombre es bonito (codigo2).
 
-                            MessageBox.Show(mensaje);
-
+                            MessageBox.Show(mensaje.Split('\0')[0]);
+                            if (mensaje.Split('\0')[0] == "1")
+                            {
+                                MessageBox.Show("[*] Login con exito");
+                                con = true;
+                            }
                             break;
 
                         case 3: //Respuesta del servidor a si soy alto o no (codigo3)
@@ -234,7 +237,7 @@ namespace WindowsFormsApplication1
 
                         case 14:
                                             
-                            int numero_room = Convert.ToInt32(trozos[1]);
+                            numero_room = Convert.ToInt32(trozos[1]);
                             MessageBox.Show("" + numero_room);
                                                          
                             switch (numero_room)
@@ -253,6 +256,30 @@ namespace WindowsFormsApplication1
                                     break;
                             }
                         break;
+
+                        case 15: //NOTIFICACIÓN PARTIDA EMPEZADA
+                            {
+                                numero_room = Convert.ToInt32(trozos[1]);
+                                MessageBox.Show("" + numero_room);
+                                                         
+                            switch (numero_room)
+                                {
+                                    case 1:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_game(trozos[2]);
+                                        break;
+                                    case 2:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_game(trozos[2]);
+                                        break;
+                                    case 3:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_game(trozos[2]);
+                                        break;
+                                    case 4:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_game(trozos[2]);
+                                        break;
+                                }
+                            }
+                        break;
+
                         default:
                             MessageBox.Show("Error");
                             break;
@@ -277,27 +304,30 @@ namespace WindowsFormsApplication1
         }
         private void button1_Click(object sender, EventArgs e)
         {
-            //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
-            //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse("172.23.240.236");
-            IPEndPoint ipep = new IPEndPoint(direc, PORT);
-            
-
-            //Creamos el socket 
-            server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            try
             {
-                server.Connect(ipep);//Intentamos conectar el socket
-                this.BackColor = Color.Green;
-                MessageBox.Show("Conectado");
-                con = true;
+                //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
+                IPAddress direc = IPAddress.Parse("172.23.240.236");
+                IPEndPoint ipep = new IPEndPoint(direc, PORT);
 
-            }
-            catch (SocketException ex)
-            {
-                //Si hay excepcion imprimimos error y salimos del programa con return 
-                MessageBox.Show("No he podido conectar con el servidor" + ex);
-                return;
+                //Creamos el socket 
+                server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    server.Connect(ipep);//Intentamos conectar el socket
+                    this.BackColor = Color.Green;
+                    MessageBox.Show("Conectado");
+
+                    // Inicia el hilo de atención aquí, antes de hacer login
+                    conectado = true;
+                    ThreadStart ts = delegate { AtenderServidor(); };
+                    atender = new Thread(ts);
+                    atender.Start();
+                }
+                catch (SocketException ex)
+                {
+                    MessageBox.Show("No he podido conectar con el servidor" + ex);
+                    return;
+                }
             }
 
         }
@@ -324,19 +354,12 @@ namespace WindowsFormsApplication1
         // Botón para iniciar sesión
         private void buttonLogin_Click_1(object sender, EventArgs e)
         {
-            if (con)
+            if (conectado)
             {
                 //enviar
                 string mensaje = "2/" + nombre.Text + "/" + contraseña.Text; // LOGIN
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
-
-
-                conectado = true;
-
-                ThreadStart ts = delegate { AtenderServidor(); };
-                atender = new Thread(ts);
-                atender.Start();
             }
             else
             {
@@ -360,6 +383,23 @@ namespace WindowsFormsApplication1
 
                 this.BackColor = Color.Gray;
                 conectado = false;
+                
+                //Limpiar TextBox
+                nombre.Clear();
+                email.Clear();
+                contraseña.Clear();
+
+                // Cierra todos los formularios Room abiertos
+                foreach (var room in romms)
+                {
+                    if (room != null && !room.IsDisposed)
+                    {
+                        this.Invoke((MethodInvoker)delegate {
+                            room.Close();
+                        });
+                    }
+                }
+                romms.Clear();
 
                 // Limpia el DataGridView para que no de error al desconexión
                 this.Invoke((MethodInvoker)delegate {

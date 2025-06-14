@@ -71,5 +71,22 @@ namespace WindowsFormsApplication1
         {
             listbox_chat.Items.Add(mensaje);
         }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button2_Click(object sender, EventArgs e) //BTN START GAME
+        {
+            string startmsg = $"12/{this.num_room}";
+            byte[] msg_fial = System.Text.Encoding.ASCII.GetBytes(startmsg);
+            txtbox_chat.Clear();
+            serverform.Send(msg_fial);
+        }
+        public void set_msg_game(string mensaje)
+        {
+            MessageBox.Show(mensaje);
+        }
     }
 }
