@@ -21,7 +21,7 @@ namespace WindowsFormsApplication1
         List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 50043;
+        int PORT = 50042;
         bool conectado = false;
         int room_num;
         bool aceptar;
@@ -45,7 +45,7 @@ namespace WindowsFormsApplication1
             {
                 try
                 {
-                   // mensaje = "";
+                    // mensaje = "";
                     byte[] msg2 = new byte[200];
                     int bytesRecibidos = server.Receive(msg2);
                     if (bytesRecibidos == 0)
@@ -69,7 +69,7 @@ namespace WindowsFormsApplication1
                             MessageBox.Show(mensaje); // Mostrará "Saliendo..."
                             conectado = false;
                             break;
-                        
+
                         case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
 
                             MessageBox.Show(mensaje);
@@ -119,13 +119,14 @@ namespace WindowsFormsApplication1
                             }
 
                             // Asignar el DataSource
-                            this.Invoke((MethodInvoker)delegate {
+                            this.Invoke((MethodInvoker)delegate
+                            {
                                 dataGridView1.ReadOnly = true;
                                 dataGridView1.DataSource = dt;
                                 dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                                 dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
                             });
-                            
+
                             break;
 
                         case 8: //Invitacion realizada
@@ -190,21 +191,21 @@ namespace WindowsFormsApplication1
                             numRoom = Convert.ToInt32(mensaje);
                             numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
                             // Verificamos si la sala ya está abierta
-                                switch (numRoom)
-                                {
-                                    case 1:
-                                        Room1_label.Text = $"{numPersonas}/4 Room 1";
-                                        break;
-                                    case 2:
-                                        Room2_label.Text = $"{numPersonas}/4 Room 2";
-                                        break;
-                                    case 3:
-                                        Room3_label.Text = $"{numPersonas}/4 Room 3";
-                                        break;
-                                    case 4:
-                                        Room4_label.Text = $"{numPersonas}/4 Room 4";
-                                        break;
-                                }
+                            switch (numRoom)
+                            {
+                                case 1:
+                                    Room1_label.Text = $"{numPersonas}/4 Room 1";
+                                    break;
+                                case 2:
+                                    Room2_label.Text = $"{numPersonas}/4 Room 2";
+                                    break;
+                                case 3:
+                                    Room3_label.Text = $"{numPersonas}/4 Room 3";
+                                    break;
+                                case 4:
+                                    Room4_label.Text = $"{numPersonas}/4 Room 4";
+                                    break;
+                            }
                             break;
                         case 12:
                             // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
@@ -229,17 +230,17 @@ namespace WindowsFormsApplication1
                             }
                             break;
                         case 13:
-                                    Room1_label.Text = $"{trozos[1]}/4 Room 1";
-                                    Room2_label.Text = $"{trozos[2]}/4 Room 2";
-                                    Room3_label.Text = $"{trozos[3]}/4 Room 3";
-                                    Room4_label.Text = $"{trozos[4].Split('\0')[0][0]}/4 Room 4";
+                            Room1_label.Text = $"{trozos[1]}/4 Room 1";
+                            Room2_label.Text = $"{trozos[2]}/4 Room 2";
+                            Room3_label.Text = $"{trozos[3]}/4 Room 3";
+                            Room4_label.Text = $"{trozos[4].Split('\0')[0][0]}/4 Room 4";
                             break;
 
                         case 14:
-                                            
+
                             numero_room = Convert.ToInt32(trozos[1]);
                             MessageBox.Show("" + numero_room);
-                                                         
+
                             switch (numero_room)
                             {
                                 case 1:
@@ -255,14 +256,14 @@ namespace WindowsFormsApplication1
                                     romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_chat(trozos[2]);
                                     break;
                             }
-                        break;
+                            break;
 
                         case 15: //NOTIFICACIÓN PARTIDA EMPEZADA
                             {
                                 numero_room = Convert.ToInt32(trozos[1]);
                                 MessageBox.Show("" + numero_room);
-                                                         
-                            switch (numero_room)
+
+                                switch (numero_room)
                                 {
                                     case 1:
                                         romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_msg_game(trozos[2]);
@@ -278,8 +279,113 @@ namespace WindowsFormsApplication1
                                         break;
                                 }
                             }
-                        break;
+                            break;
 
+                        case 16:
+                            if (trozos[1] == "2")
+                            {
+                                string[] partidas = trozos[2].Split(','); // Cada partida separada por ';'
+                                DataTable dts = new DataTable();
+                                dts.Columns.Add("ID");
+                                dts.Columns.Add("Fecha");
+
+                                foreach (string partida in partidas)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(partida))
+                                    {
+                                        string[] vec = partida.Split(';');
+                                        if (vec.Length >= 2)
+                                            dts.Rows.Add(vec[0], vec[1]);
+                                    }
+                                }
+
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    dataGridView_historial.ReadOnly = true;
+                                    dataGridView_historial.DataSource = dts;
+                                    dataGridView_historial.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                                    dataGridView_historial.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+                                });
+                            }
+                            else if (trozos[1] == "1")
+                            {
+                                MessageBox.Show("No hay partidas en las fechas consultadas");
+                            }
+                            else
+                            {
+                                MessageBox.Show("Error al hacer la consulta");
+                            }
+                            break;
+
+                        case 17:
+                            if (trozos[1] == "2")
+                            {
+                                string[] partidas = trozos[2].Split(','); // Cada partida separada por ';'
+                                DataTable dts = new DataTable();
+                                dts.Columns.Add("ID");
+                                dts.Columns.Add("Fecha");
+                                dts.Columns.Add("Estado");
+
+                                foreach (string partida in partidas)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(partida))
+                                    {
+                                        string[] vec = partida.Split(';');
+                                        if (vec.Length >= 3)
+                                            dts.Rows.Add(vec[0], vec[1], vec[2]);
+                                    }
+                                }
+
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    dataGridView_historial.ReadOnly = true;
+                                    dataGridView_historial.DataSource = dts;
+                                    dataGridView_historial.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                                    dataGridView_historial.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+                                });
+                            }
+                            else if (trozos[1] == "1")
+                            {
+                                MessageBox.Show("No hay partidas en las fechas consultadas");
+                            }
+                            else
+                            {
+                                MessageBox.Show("Error al hacer la consulta");
+                            }
+                            break;
+
+                        case 18:
+                            if (trozos[1] == "2")
+                            {
+                                DataTable dts = new DataTable();
+                                dts.Columns.Add("USERNAME");
+
+                                string[] name = trozos[2].Split(',');
+                                foreach (string nombre in name)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(nombre)) // Validación por si hay nombres vacíos
+                                        dts.Rows.Add(nombre.Trim());
+                                }
+
+                                // Asignar el DataSource
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    dataGridView_historial.ReadOnly = true;
+                                    dataGridView_historial.DataSource = dts;
+                                    dataGridView_historial.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                                    dataGridView_historial.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+                                });
+
+                            }
+                            else if (trozos[1] == "1")
+                            {
+                                MessageBox.Show("No has jugado con otro jugador");
+                            }
+                            else
+                            {
+                                MessageBox.Show("Error al hacer la consulta");
+                            }
+                            break;
                         default:
                             MessageBox.Show("Error");
                             break;
@@ -629,6 +735,57 @@ namespace WindowsFormsApplication1
                 MessageBox.Show("No estás conectado al servidor.");
             }
            
+        }
+
+        private void label6_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (con)
+            {
+                DateTime fechaMin = dateTimePicker_historial_MIN.Value;
+                DateTime fechaMax = dateTimePicker_historial_MAX.Value;
+                string fechaMinStr = fechaMin.ToString("yyyy-MM-dd");
+                string fechaMaxStr = fechaMax.ToString("yyyy-MM-dd");
+                string mensaje = $"13/{fechaMinStr}/{fechaMaxStr}";
+                byte[] msg = Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
+        }
+
+        private void Btn_Consulta_historial_jugador_Click(object sender, EventArgs e)
+        {
+            if (con)
+            {
+                string mensaje = $"14/{textBox_historial.Text}";
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            if (con)
+            {
+                string mensaje = $"15/";
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                MessageBox.Show("No estás conectado al servidor.");
+            }
         }
     }
 }

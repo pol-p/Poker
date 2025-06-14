@@ -56,7 +56,18 @@
             this.JoinR3_btn = new System.Windows.Forms.Button();
             this.JoinR4_btn = new System.Windows.Forms.Button();
             this.btn_EliminarCuenta = new System.Windows.Forms.Button();
+            this.dataGridView_historial = new System.Windows.Forms.DataGridView();
+            this.textBox_historial = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.dateTimePicker_historial_MIN = new System.Windows.Forms.DateTimePicker();
+            this.dateTimePicker_historial_MAX = new System.Windows.Forms.DateTimePicker();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.button3 = new System.Windows.Forms.Button();
+            this.Btn_Consulta_historial_jugador = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView_historial)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -341,11 +352,108 @@
             this.btn_EliminarCuenta.UseVisualStyleBackColor = true;
             this.btn_EliminarCuenta.Click += new System.EventHandler(this.btn_EliminarCuenta_Click);
             // 
+            // dataGridView_historial
+            // 
+            this.dataGridView_historial.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView_historial.Location = new System.Drawing.Point(376, 420);
+            this.dataGridView_historial.Name = "dataGridView_historial";
+            this.dataGridView_historial.Size = new System.Drawing.Size(313, 233);
+            this.dataGridView_historial.TabIndex = 33;
+            // 
+            // textBox_historial
+            // 
+            this.textBox_historial.Location = new System.Drawing.Point(117, 467);
+            this.textBox_historial.Name = "textBox_historial";
+            this.textBox_historial.Size = new System.Drawing.Size(175, 20);
+            this.textBox_historial.TabIndex = 34;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(28, 470);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(85, 13);
+            this.label5.TabIndex = 35;
+            this.label5.Text = "Nombre Jugador";
+            // 
+            // dateTimePicker_historial_MIN
+            // 
+            this.dateTimePicker_historial_MIN.Location = new System.Drawing.Point(776, 454);
+            this.dateTimePicker_historial_MIN.Name = "dateTimePicker_historial_MIN";
+            this.dateTimePicker_historial_MIN.Size = new System.Drawing.Size(191, 20);
+            this.dateTimePicker_historial_MIN.TabIndex = 36;
+            // 
+            // dateTimePicker_historial_MAX
+            // 
+            this.dateTimePicker_historial_MAX.Location = new System.Drawing.Point(776, 518);
+            this.dateTimePicker_historial_MAX.Name = "dateTimePicker_historial_MAX";
+            this.dateTimePicker_historial_MAX.Size = new System.Drawing.Size(191, 20);
+            this.dateTimePicker_historial_MAX.TabIndex = 37;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(858, 438);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(24, 13);
+            this.label6.TabIndex = 38;
+            this.label6.Text = "Min";
+            this.label6.Click += new System.EventHandler(this.label6_Click);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(858, 502);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(27, 13);
+            this.label7.TabIndex = 39;
+            this.label7.Text = "Max";
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(777, 564);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(190, 34);
+            this.button3.TabIndex = 40;
+            this.button3.Text = "Consultar entre Fechas";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // Btn_Consulta_historial_jugador
+            // 
+            this.Btn_Consulta_historial_jugador.Location = new System.Drawing.Point(41, 502);
+            this.Btn_Consulta_historial_jugador.Name = "Btn_Consulta_historial_jugador";
+            this.Btn_Consulta_historial_jugador.Size = new System.Drawing.Size(241, 25);
+            this.Btn_Consulta_historial_jugador.TabIndex = 41;
+            this.Btn_Consulta_historial_jugador.Text = "Consultar partidas con juagdor";
+            this.Btn_Consulta_historial_jugador.UseVisualStyleBackColor = true;
+            this.Btn_Consulta_historial_jugador.Click += new System.EventHandler(this.Btn_Consulta_historial_jugador_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(41, 623);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(257, 30);
+            this.button4.TabIndex = 42;
+            this.button4.Text = "Ver con quien has jugado alguna vez";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(915, 508);
+            this.ClientSize = new System.Drawing.Size(1012, 680);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.Btn_Consulta_historial_jugador);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.dateTimePicker_historial_MAX);
+            this.Controls.Add(this.dateTimePicker_historial_MIN);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.textBox_historial);
+            this.Controls.Add(this.dataGridView_historial);
             this.Controls.Add(this.btn_EliminarCuenta);
             this.Controls.Add(this.JoinR4_btn);
             this.Controls.Add(this.JoinR3_btn);
@@ -378,6 +486,7 @@
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView_historial)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -413,6 +522,16 @@
         private System.Windows.Forms.Button JoinR3_btn;
         private System.Windows.Forms.Button JoinR4_btn;
         private System.Windows.Forms.Button btn_EliminarCuenta;
+        private System.Windows.Forms.DataGridView dataGridView_historial;
+        private System.Windows.Forms.TextBox textBox_historial;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.DateTimePicker dateTimePicker_historial_MIN;
+        private System.Windows.Forms.DateTimePicker dateTimePicker_historial_MAX;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button Btn_Consulta_historial_jugador;
+        private System.Windows.Forms.Button button4;
     }
 }
 
