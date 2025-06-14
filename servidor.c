@@ -14,7 +14,7 @@
 
 #define MAX_BUFF 1024
 #define MAX_SIZE 1024 
-#define PORT 50043
+#define PORT 50042
 #define HOST "localhost"
 #define USUARIO "usr"
 #define PASSWD "1234"
@@ -595,6 +595,111 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 snprintf(buff_out, sizeof(buff_out), "1/La sala %d no tiene suficientes jugadores para iniciar la partida", room);
             }
 
+            break;
+        }
+
+        case 13: {
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "100/Error formato (fechaMin)");
+                break;
+            }
+            char fechaMin[20];
+            strcpy(fechaMin, token);
+
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "100/Error formato (fechaMax)");
+                break;
+            }
+            char fechaMax[20];
+            strcpy(fechaMax, token);
+
+            // El nombre del usuario está en client->name
+            char consulta_sql[MAX_BUFF];
+            snprintf(consulta_sql, sizeof(consulta_sql),
+                "SELECT Partidas.id, Partidas.fecha "
+                "FROM Partidas "
+                "JOIN Participaciones ON Partidas.id = Participaciones.partida_id "
+                "WHERE Participaciones.jugador = '%s' "
+                "AND Partidas.fecha BETWEEN '%s' AND '%s'",
+                client->name, fechaMin, fechaMax);
+
+            int error = 0;
+            ejecutar_consulta(conn, consulta_sql, buff_out, &error);
+
+            if (error) {
+                snprintf(buff_out, sizeof(buff_out), "16/0/No se pudo obtener el historial");
+            } else if (strlen(buff_out) == 0) {
+                snprintf(buff_out, sizeof(buff_out), "16/1/Sin partidas en ese periodo");
+            } else {
+                // Puedes devolver el resultado tal cual o formatearlo mejor
+                char resultado[MAX_BUFF];
+                snprintf(resultado, sizeof(resultado), "16/2/%s", buff_out);
+                printf("Resultado de la consulta: %s\n", resultado);
+                strncpy(buff_out, resultado, sizeof(buff_out));
+            }
+            break;
+        }
+        case 14: {
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "17/0/Formato incorrecto (falta nombre de jugador)");
+                break;
+            }
+            char jugador_buscado[20];
+            strcpy(jugador_buscado, token);
+
+            // Construir la consulta SQL
+            char consulta_sql[MAX_BUFF];
+            snprintf(consulta_sql, sizeof(consulta_sql),
+                "SELECT Partidas.id, Partidas.fecha, Participaciones.resultado "
+                "FROM Partidas "
+                "JOIN Participaciones ON Partidas.id = Participaciones.partida_id "
+                "JOIN Participaciones AS Participaciones2 ON Partidas.id = Participaciones2.partida_id "
+                "WHERE Participaciones.jugador = '%s' "
+                "AND Participaciones2.jugador = '%s' "
+                "ORDER BY Partidas.fecha DESC",
+                client->name, jugador_buscado);
+
+            int error = 0;
+            ejecutar_consulta(conn, consulta_sql, buff_out, &error);
+
+            if (error) {
+                snprintf(buff_out, sizeof(buff_out), "17/0/No se pudo obtener el historial");
+            } else if (strlen(buff_out) == 0) {
+                snprintf(buff_out, sizeof(buff_out), "17/1/Sin partidas jugadas con %s", jugador_buscado);
+            } else {
+                char resultado[MAX_BUFF];
+                snprintf(resultado, sizeof(resultado), "17/2/%s", buff_out);
+                strncpy(buff_out, resultado, sizeof(buff_out));
+                printf("Resultado de la consulta: %s\n", resultado);
+            }
+            break;
+        }
+        case 15: {
+           // Consulta SQL: jugadores con los que he jugado alguna vez
+            char consulta_sql[MAX_BUFF];
+            snprintf(consulta_sql, sizeof(consulta_sql),
+                "SELECT DISTINCT Participaciones2.jugador "
+                "FROM Participaciones "
+                "JOIN Participaciones AS Participaciones2 ON Participaciones.partida_id = Participaciones2.partida_id "
+                "WHERE Participaciones.jugador = '%s' AND Participaciones2.jugador != '%s'",
+                client->name, client->name);
+
+            int error = 0;
+            ejecutar_consulta(conn, consulta_sql, buff_out, &error);
+
+            if (error) {
+                snprintf(buff_out, sizeof(buff_out), "18/0/No se pudo obtener la lista de jugadores");
+            } else if (strlen(buff_out) == 0) {
+                snprintf(buff_out, sizeof(buff_out), "18/1/No has jugado con ningún otro jugador");
+            } else {
+                char resultado[MAX_BUFF];
+                snprintf(resultado, sizeof(resultado), "18/2/%s", buff_out);
+                strncpy(buff_out, resultado, sizeof(buff_out));
+                printf("Resultado de la consulta: %s\n", resultado);
+            }
             break;
         }
         
