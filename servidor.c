@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <signal.h>
+#include <time.h>
 
 #define MAX_BUFF 1024
 #define MAX_SIZE 1024 
@@ -63,7 +64,8 @@ typedef struct {
     int turno_actual;         // índice del jugador al que le toca
     int precio_entrada;
     int cartas_vistas;      // Contador de jugadores que han visto sus cartas
-
+    char nombre_ganador[20]; // Nombre de la sala
+    int num_players_iniciado;
 } Room;
 
 // Estructura para manejar la lista de salas
@@ -77,6 +79,7 @@ DynamicClientArray connected_clients = {NULL, 0, 0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 ListaRooms list_rooms = {0};
 int precios_sala[4] = {100, 200, 1000, 3500};
+
 
 
 void error(const char *msg);  // Imprime errores y sale
@@ -104,9 +107,11 @@ void eniviar_mensaje_chat(int room, char* mensaje, char *name);  // Envia un men
 int sala_tiene_min_jugadores(int num_room);  // Comprueba si una sala tiene al menos 2 jugadores para iniciar partida
 void enviar_mensaje_a_sala(int num_room, const char* mensaje);  // Envia un mensaje a todos los jugadores de una sala
 void inicializar_y_mezclar_baraja(Baraja* baraja);  // Inicializa y mezcla una baraja de cartas
+int calcular_ganador(Room* sala);  // Calcula el ganador de una partida en una sala
 
 // Funcion principal del servidor
 int main(int argc, char **argv) {
+    srand(time(NULL));
     int sock_listen, sock_conn;
     struct sockaddr_in cli_adr;
     socklen_t cli_len = sizeof(cli_adr);
@@ -507,7 +512,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 break;
             }
 
-
             char buff_cons[MAX_BUFF];
             switch (room) {
                 case 1:
@@ -674,6 +678,10 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     perror("Error al escribir en el socket");
                     return 1;
                 }
+                //////
+                int ganador = calcular_ganador(nroom);
+                strcpy (nroom->nombre_ganador, nroom->players[ganador].name); 
+                nroom->num_players_iniciado = nroom->num_players;
             } 
             
             else {
@@ -789,7 +797,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
         }
 
         case 16: {
-           
             token = strtok(NULL, "/");
             if (token == NULL) {
                 strcpy(buff_out, "1/ERROR, Falta número de sala");
@@ -812,15 +819,6 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 }
             }
 
-            // Solo mostrar cartas de la mesa si todos han pulsado el botón
-            if (sala->cartas_vistas >= sala->num_players) {
-                char msg[MAX_BUFF];
-                snprintf(msg, sizeof(msg), "20/%d/%d,%d,%d,%d,%d", room,
-                sala->mesa[0].valor, sala->mesa[1].valor, sala->mesa[2].valor,
-                sala->mesa[3].valor, sala->mesa[4].valor);
-                enviar_mensaje_a_sala(room - 1, msg);
-            }
-
             // Añadir cartas de cada jugador
             char buff_cons[MAX_BUFF];
             sprintf(buff_cons, "19/%d/", room);
@@ -832,6 +830,37 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
             }
             printf("Enviando cartas de jugadores: %s\n", buff_cons); //DEBUG
             strcpy(buff_out, buff_cons);
+            // Solo mostrar cartas de la mesa si todos han pulsado el botón
+            if (sala->cartas_vistas >= sala->num_players) {
+                char msg[MAX_BUFF];
+                snprintf(msg, sizeof(msg), "20/%d/%d,%d,%d,%d,%d", room,
+                sala->mesa[0].valor, sala->mesa[1].valor, sala->mesa[2].valor,
+                sala->mesa[3].valor, sala->mesa[4].valor);
+                enviar_mensaje_a_sala(room - 1, msg);
+               
+            }
+            break;
+        }
+            case 17: {
+                int ganador = 0;
+                token = strtok(NULL, "/");
+                if (token == NULL) {
+                    strcpy(buff_out, "1/ERROR, Falta número de sala");
+                    break;
+                }
+                int room = atoi(token);
+                Room* sala = &list_rooms.rooms[room - 1];
+                sala->iniciada = 0;
+                sala->cartas_vistas = 0; // Reiniciar contador de cartas vistas
+                snprintf(buff_out, sizeof(buff_out), "22/%d/%s/%d", room, sala->nombre_ganador, precios_sala[room - 1] * sala->num_players_iniciado);
+                // Actualizar saldo del ganador en la base de datos
+                char consulta_sql[MAX_BUFF];
+                snprintf(consulta_sql, sizeof(consulta_sql),
+                    "UPDATE Jugadores SET saldo = saldo + %d WHERE nombre = '%s'", precios_sala[room - 1] * sala->num_players_iniciado, sala->nombre_ganador);
+                if (mysql_query(conn, consulta_sql) != 0) {
+                    strcpy(buff_out, "1/ERROR, No se pudo actualizar el saldo del ganador");
+                    break;
+                }
             break;
         }
         
@@ -1207,4 +1236,58 @@ void inicializar_y_mezclar_baraja(Baraja* baraja) {
         baraja->cartas[i] = baraja->cartas[j];
         baraja->cartas[j] = temp;
     }
+}
+
+// Devuelve el índice del jugador ganador
+int calcular_ganador(Room* sala) {
+    int mejor_puntaje = -1;
+    int ganador = -1;
+
+    for (unsigned int i = 0; i < sala->num_players; i++) {
+        // 1. Buscar la mejor pareja del jugador
+        int max_pareja = -1;
+        // Combinaciones de mano con mesa
+        for (int m = 0; m < 2; m++) {
+            for (int c = 0; c < 5; c++) {
+                if (sala->players[i].mano[m].valor == sala->mesa[c].valor) {
+                    if (sala->players[i].mano[m].valor > max_pareja)
+                        max_pareja = sala->players[i].mano[m].valor;
+                }
+            }
+        }
+        // Combinación entre las dos cartas de la mano
+        if (sala->players[i].mano[0].valor == sala->players[i].mano[1].valor) {
+            if (sala->players[i].mano[0].valor > max_pareja)
+                max_pareja = sala->players[i].mano[0].valor;
+        }
+        // Combinaciones entre cartas de la mesa
+        for (int c1 = 0; c1 < 5; c1++) {
+            for (int c2 = c1 + 1; c2 < 5; c2++) {
+                if (sala->mesa[c1].valor == sala->mesa[c2].valor) {
+                    if (sala->mesa[c1].valor > max_pareja)
+                        max_pareja = sala->mesa[c1].valor;
+                }
+            }
+        }
+
+        int puntaje = 0;
+        if (max_pareja != -1) {
+            // Si tiene pareja, el puntaje es 100 + valor de la pareja
+            puntaje = 100 + max_pareja;
+        } else {
+            // Si no, la carta más alta entre mano y mesa
+            int max_carta = sala->players[i].mano[0].valor > sala->players[i].mano[1].valor ?
+                            sala->players[i].mano[0].valor : sala->players[i].mano[1].valor;
+            for (int c = 0; c < 5; c++)
+                if (sala->mesa[c].valor > max_carta)
+                    max_carta = sala->mesa[c].valor;
+            puntaje = max_carta;
+        }
+
+        if (puntaje > mejor_puntaje) {
+            mejor_puntaje = puntaje;
+            ganador = i;
+        }
+    }
+    return ganador; // Devuelve el índice del jugador ganador
 }
