@@ -26,6 +26,7 @@ namespace WindowsFormsApplication1
         int room_num;
         bool aceptar;
         bool con = false;
+        string nom;
         public Form1()
         {
             InitializeComponent();
@@ -60,7 +61,6 @@ namespace WindowsFormsApplication1
                     int codigo = Convert.ToInt32(trozos[0]); //Convierto el codigo en entero
                     string mensaje = trozos[1];
                     int numero_room;
-
 
                     switch (codigo)
                     {
@@ -386,6 +386,94 @@ namespace WindowsFormsApplication1
                                 MessageBox.Show("Error al hacer la consulta");
                             }
                             break;
+
+                        case 19: //Par de cartas de cada jugador
+                            {
+                                numero_room = Convert.ToInt32(trozos[1]);
+                                MessageBox.Show("" + numero_room);
+
+                                string[] cartasnombre = trozos[2].Split(';'); // Cada carta separada por ','
+                                string nomb = " ";
+                                int iterar;
+                                string cartas = " ";
+                                for(int c = 0; c < cartasnombre.Length; c++)
+                                {
+                                    nomb = cartasnombre[c].Split(':')[0];
+                                    cartas = cartasnombre[c].Split(':')[1];
+                                    if (nomb == this.nom)
+                                    {
+                                        iterar = c;
+                                        break;
+                                    }
+                                }
+                                MessageBox.Show("Cartas de " + nomb + ": " + cartas);
+                                switch (numero_room)
+                                {
+                                    case 1:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas(cartas);
+                                        break;
+                                    case 2:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas(cartas);
+                                        break;
+                                    case 3:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas(cartas);
+                                        break;
+                                    case 4:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas(cartas);
+                                        break;
+                                }
+                            }
+                            break;
+
+                        case 20: //Cartas 5 mesa principal
+                            {
+                                numero_room = Convert.ToInt32(trozos[1]);
+                                MessageBox.Show("" + numero_room);
+
+                                string[] cartas = trozos[2].Split(',');
+
+                                switch (numero_room)
+                                {
+                                    case 1:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas_mesa(cartas);
+                                        break;
+                                    case 2:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas_mesa(cartas);
+                                        break;
+                                    case 3:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas_mesa(cartas);
+                                        break;
+                                    case 4:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_cartas_mesa(cartas);
+                                        break;
+                                }
+                            }
+                            break;
+
+                        case 21: //TURNO
+                            {
+                                numero_room = Convert.ToInt32(trozos[1]);
+                                MessageBox.Show("" + numero_room);
+
+
+                                switch (numero_room)
+                                {
+                                    case 1:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
+                                        break;
+                                    case 2:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
+                                        break;
+                                    case 3:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
+                                        break;
+                                    case 4:
+                                        romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
+                                        break;
+                                }
+                            }
+                            break;
+
                         default:
                             MessageBox.Show("Error");
                             break;
@@ -441,7 +529,7 @@ namespace WindowsFormsApplication1
         // Botón para registrar
         private void buttonRegister_Click_1(object sender, EventArgs e)
         {
-            if (con)
+            if (conectado)
             {
                 //enviar
                 string mensaje = "1/" + nombre.Text + "/" + email.Text + "/" + contraseña.Text; //REGISTER
@@ -466,6 +554,7 @@ namespace WindowsFormsApplication1
                 string mensaje = "2/" + nombre.Text + "/" + contraseña.Text; // LOGIN
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
+                this.nom = nombre.Text;
             }
             else
             {

@@ -17,6 +17,10 @@ namespace WindowsFormsApplication1
     {
         int num_room;
         Socket serverform;
+        bool turno = false; // Variable para controlar el turno
+        string carta1 = "";
+        string carta2 = "";
+        string car1, car2, car3, car4, car5;
         public Room()
         {
             InitializeComponent();
@@ -87,6 +91,53 @@ namespace WindowsFormsApplication1
         public void set_msg_game(string mensaje)
         {
             MessageBox.Show(mensaje);
+        }
+
+        private void Btn_turno_Click(object sender, EventArgs e)
+        {
+            if (turno == false) //FALSE
+            {
+                MessageBox.Show("Ludopatia"); //IMAGEN ERIC TRABAJA
+            }
+            else
+            {
+                string startmsg = $"16/{this.num_room}";
+                byte[] msg_fial = System.Text.Encoding.ASCII.GetBytes(startmsg);
+                txtbox_chat.Clear();
+                serverform.Send(msg_fial);
+                turno = false;
+                Btn_turno.Text = "Esperando resultado...";
+            }
+        }
+        public void set_turno()
+        {
+            turno = true;
+            Btn_turno.Text = "Tus cartas están listas... ¿te atreves a verlas? 🎰 ";
+        }
+        public void set_cartas(string ca)
+        {
+            string[] v = ca.Split(',');
+            this.carta1 = v[0];
+            this.carta2 = v[1];
+
+            MessageBox.Show($"Tus cartas son: {carta1} y {carta2}");
+            lab_ca1_jugador.Text = carta1.ToString();
+            lab_ca2_jugador.Text = carta2.ToString();
+
+        }
+        public void set_cartas_mesa(string[] ca1)
+        {
+            this.car1 = ca1[0];
+            this.car2 = ca1[1];
+            this.car3 = ca1[2];
+            this.car4 = ca1[3];
+            this.car5 = ca1[4];
+
+            label1.Text = car1;
+            label2.Text = car2;
+            label3.Text = car3;
+            label4.Text = car4;
+            label5.Text = car5;
         }
     }
 }
