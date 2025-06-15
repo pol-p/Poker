@@ -35,17 +35,35 @@ typedef struct {
     int count;             // Numero de clientes activos
 } DynamicClientArray;
 
+typedef struct {
+    int valor; // 1-14
+} Carta;
+
+typedef struct {
+    Carta cartas[40]; // 14 cartas si quieres 4 jugadores x 10 cartas
+    int num_cartas;
+} Baraja;
+
 // Estructura para representar un jugador dentro de una sala
 typedef struct {
     char name[20];    // Nombre del jugador
     int sock_conn;    // Socket asociado al jugador
+    Carta mano[2];    // 2 cartas por jugador
+    int vistas; //Si ha pulsado el boton
+
 } Player;
 
 // Estructura para representar una sala y sus jugadores
 typedef struct {
+    Baraja baraja;
+    Carta mesa[5]; // 5 cartas comunes
     unsigned int num_players; // Numero actual de jugadores en la sala
     Player players[4];        // Maximo 4 jugadores por sala
     int iniciada;             // Indica si la sala ha iniciado una partida (0=no, 1=sí)
+    int turno_actual;         // índice del jugador al que le toca
+    int precio_entrada;
+    int cartas_vistas;      // Contador de jugadores que han visto sus cartas
+
 } Room;
 
 // Estructura para manejar la lista de salas
@@ -53,10 +71,13 @@ typedef struct {
     Room rooms[4];  // Maximo 4 salas
 } ListaRooms;
 
+
 // Variables globales (idealmente se encapsularian en modulos separados)
 DynamicClientArray connected_clients = {NULL, 0, 0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 ListaRooms list_rooms = {0};
+int precios_sala[4] = {100, 200, 1000, 3500};
+
 
 void error(const char *msg);  // Imprime errores y sale
 void* handle_client_thread(void* arg);  // Hilo que maneja cada cliente
@@ -82,6 +103,7 @@ void eniviar_mensaje_chat(int room, char* mensaje, char *name);  // Envia un men
 //FUNCIONES DE JUEGO
 int sala_tiene_min_jugadores(int num_room);  // Comprueba si una sala tiene al menos 2 jugadores para iniciar partida
 void enviar_mensaje_a_sala(int num_room, const char* mensaje);  // Envia un mensaje a todos los jugadores de una sala
+void inicializar_y_mezclar_baraja(Baraja* baraja);  // Inicializa y mezcla una baraja de cartas
 
 // Funcion principal del servidor
 int main(int argc, char **argv) {
@@ -451,28 +473,67 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 break;
             }
             room = atoi(token);
+            int precio = precios_sala[room - 1];
+            // 1. Consultar saldo
+            char consulta_sql[MAX_BUFF];
+            snprintf(consulta_sql, sizeof(consulta_sql),
+                "SELECT saldo FROM Jugadores WHERE nombre = '%s'", client->name);
             {
-                char buff_cons[MAX_BUFF];
-                switch (room) {
-                    case 1:
-                    case 2:
-                    case 3:
-                    case 4: {
-                        capacity = AddPlayerToRoom(room, client->name, sock_conn);
-                        if (capacity == 5) {
-                            snprintf(buff_cons, MAX_BUFF, "1/Error capacidad llena de Sala. Prueba con otra");
-                            strcpy(buff_out, buff_cons);
-                        } else {
-                            enviar_info_jugadores_de_sala(room, sock_conn);
-                            snprintf(buff_cons, MAX_BUFF, "10/%d/%d", room, capacity);
-                            strcpy(buff_out, buff_cons);
-                        }
-                        break;
-                    }
-                    default:
-                        strcpy(buff_out, "100/Error: Sala desconocida");
-                        break;
+            if (mysql_query(conn, consulta_sql) != 0) {
+                snprintf(buff_out, sizeof(buff_out), "1/ERROR, Error al consultar saldo");
+                break;
+            }
+            MYSQL_RES* res = mysql_store_result(conn);
+            MYSQL_ROW row = mysql_fetch_row(res);
+            if (!row) {
+                snprintf(buff_out, sizeof(buff_out), "1/ERROR, No se encontró el jugador");
+                mysql_free_result(res);
+                break;
+            }
+            float saldo = atof(row[0]);
+            mysql_free_result(res);
+
+            // 2. Comprobar si tiene saldo suficiente
+            if (saldo < precio) {
+                snprintf(buff_out, sizeof(buff_out), "1/ERROR, Saldo insuficiente para entrar en la sala");
+                break;
+            }
+
+            // 3. Descontar saldo
+            snprintf(consulta_sql, sizeof(consulta_sql),
+                "UPDATE Jugadores SET saldo = saldo - %d WHERE nombre = '%s'", precio, client->name);
+            if (mysql_query(conn, consulta_sql) != 0) {
+                snprintf(buff_out, sizeof(buff_out), "1/ERROR, Error al descontar saldo");
+                break;
+            }
+
+
+            char buff_cons[MAX_BUFF];
+            switch (room) {
+                case 1:
+                case 2:
+                case 3:
+                case 4: {
+                // Revisar si la sala ya está llena antes de intentar añadir
+                if (list_rooms.rooms[room - 1].num_players >= 4) {
+                    snprintf(buff_cons, MAX_BUFF, "1/Error capacidad llena de Sala. Prueba con otra");
+                    strcpy(buff_out, buff_cons);
+                } else if (list_rooms.rooms[room - 1].iniciada){
+                    snprintf(buff_cons, MAX_BUFF, "1/Error la sala esta en partida");
+                    strcpy(buff_out, buff_cons);
                 }
+                else {
+                    capacity = AddPlayerToRoom(room, client->name, sock_conn);
+                    enviar_info_jugadores_de_sala(room, sock_conn);
+                    snprintf(buff_cons, MAX_BUFF, "10/%d/%d", room, capacity);
+                    strcpy(buff_out, buff_cons);
+                }
+                break;
+                }
+                default:
+                strcpy(buff_out, "100/Error: Sala desconocida");
+                break;
+            }
             }
             break;
         }
@@ -573,6 +634,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
 
                 // Insertar participaciones
                 Room *nroom = &list_rooms.rooms[room - 1];
+                nroom->cartas_vistas = 0;
                 for (unsigned int i = 0; i < nroom->num_players; i++) {
                     sprintf(consulta,
                         "INSERT INTO Participaciones (partida_id, jugador, resultado) VALUES (%d, '%s', NULL)",
@@ -583,12 +645,35 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 // Marcar la sala como iniciada
                 nroom->iniciada = 1;
 
+                // Inicializar y mezclar la baraja
+                inicializar_y_mezclar_baraja(&nroom->baraja);
+
+                // Repartir 2 cartas a cada jugador
+                int carta_actual = 0;
+                for (unsigned int i = 0; i < nroom->num_players; i++) {
+                    nroom->players[i].mano[0] =  nroom->baraja.cartas[carta_actual++];
+                    nroom->players[i].mano[1] = nroom->baraja.cartas[carta_actual++];
+                    nroom->players[i].vistas = 0; // Inicialmente, ningún jugador ha visto sus cartas
+                }
+                // 5 cartas para la mesa
+                for (int i = 0; i < 5; i++) {
+                    nroom->mesa[i] = nroom->baraja.cartas[carta_actual++];
+                }
                 // Notificar a los clientes de la sala usando la función enviar_mensaje_a_sala
                 char mensaje[MAX_BUFF];
                 snprintf(mensaje, sizeof(mensaje), "15/%d/Partida iniciada por %s", room, client->name);
                 enviar_mensaje_a_sala(room - 1, mensaje);
 
                 snprintf(buff_out, sizeof(buff_out), "1/La sala %d tiene suficientes jugadores para iniciar la partida", room);
+                
+                nroom->players[0].vistas = 1; // El primer jugador que entra es el primero en jugar
+
+                char buff_con[MAX_BUFF];
+                snprintf(buff_con, sizeof(buff_con), "21/%d", room);
+                if (write(nroom->players[0].sock_conn, buff_con, strlen(buff_con)) < 0) {
+                    perror("Error al escribir en el socket");
+                    return 1;
+                }
             } 
             
             else {
@@ -700,6 +785,53 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 strncpy(buff_out, resultado, sizeof(buff_out));
                 printf("Resultado de la consulta: %s\n", resultado);
             }
+            break;
+        }
+
+        case 16: {
+           
+            token = strtok(NULL, "/");
+            if (token == NULL) {
+                strcpy(buff_out, "1/ERROR, Falta número de sala");
+                break;
+            }
+            int room = atoi(token);
+            Room* sala = &list_rooms.rooms[room - 1];
+
+            sala->cartas_vistas++;
+            char buff_con[MAX_BUFF];
+            snprintf(buff_con, sizeof(buff_con), "21/%d", room);
+            for(int k = 0; k < sala->num_players; k++) {
+                if (sala->players[k].vistas == 0) {
+                    if (write(sala->players[k].sock_conn, buff_con, strlen(buff_con)) < 0) {
+                    perror("Error al escribir en el socket");
+                    return 1;
+                    }
+                    sala->players[k].vistas = 1; // Marcar como inactiva
+                   break;
+                }
+            }
+
+            // Solo mostrar cartas de la mesa si todos han pulsado el botón
+            if (sala->cartas_vistas >= sala->num_players) {
+                char msg[MAX_BUFF];
+                snprintf(msg, sizeof(msg), "20/%d/%d,%d,%d,%d,%d", room,
+                sala->mesa[0].valor, sala->mesa[1].valor, sala->mesa[2].valor,
+                sala->mesa[3].valor, sala->mesa[4].valor);
+                enviar_mensaje_a_sala(room - 1, msg);
+            }
+
+            // Añadir cartas de cada jugador
+            char buff_cons[MAX_BUFF];
+            sprintf(buff_cons, "19/%d/", room);
+            for (unsigned int i = 0; i < sala->num_players; i++) {
+                char jugador[64];
+                snprintf(jugador, sizeof(jugador), "%s:%d,%d;", sala->players[i].name,
+                    sala->players[i].mano[0].valor, sala->players[i].mano[1].valor);
+                strcat(buff_cons, jugador);
+            }
+            printf("Enviando cartas de jugadores: %s\n", buff_cons); //DEBUG
+            strcpy(buff_out, buff_cons);
             break;
         }
         
@@ -1060,5 +1192,19 @@ void enviar_mensaje_a_sala(int num_room, const char* mensaje) {
     for (unsigned int i = 0; i < room->num_players; i++) {
         int sock_jugador = room->players[i].sock_conn;
         write(sock_jugador, mensaje, strlen(mensaje));
+    }
+}
+
+void inicializar_y_mezclar_baraja(Baraja* baraja) {
+    baraja->num_cartas = 10;
+    for (int i = 0; i < 10; i++) {
+        baraja->cartas[i].valor = 10 - i; // 10, 9, ..., 1
+    }
+    // Mezclar (Fisher-Yates)
+    for (int i = 9; i > 0; i--) {
+        int j = rand() % (i + 1);
+        Carta temp = baraja->cartas[i];
+        baraja->cartas[i] = baraja->cartas[j];
+        baraja->cartas[j] = temp;
     }
 }
