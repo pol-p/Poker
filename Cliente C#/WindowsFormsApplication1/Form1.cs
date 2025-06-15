@@ -473,6 +473,27 @@ namespace WindowsFormsApplication1
                                 }
                             }
                             break;
+                        case 22: //Acabar Partida mas ganador
+                            {
+                                numero_room = Convert.ToInt32(trozos[1]);
+                                MessageBox.Show("" + numero_room);
+                                MessageBox.Show($"El ganador de la Sala {numero_room}, es {trozos[2]}, a ganado un total de {trozos[3]}.");
+
+                                switch (numero_room)
+                                {
+                                    case 1:
+                                        break;
+                                    case 2:
+                                        break;
+                                    case 3:
+                                        //romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
+                                        break;
+                                    case 4:
+                                        //romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
+                                        break;
+                                }
+                            }
+                            break;
 
                         default:
                             MessageBox.Show("Error");
