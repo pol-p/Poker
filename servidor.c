@@ -968,13 +968,15 @@ void ejecutar_consulta(MYSQL *conn, const char *consulta, char *buffer, int *err
     buffer[0] = '\0';
 
     MYSQL_ROW fila;
+    int fila_actual = 0;
     while ((fila = mysql_fetch_row(resultado))) {
         for (int i = 0; i < num_columnas; i++) {
             strcat(buffer, fila[i] ? fila[i] : "NULL");
             if (i < num_columnas - 1)
                 strcat(buffer, ";");
         }
-        if (num_filas > 1)
+        fila_actual++;
+        if (fila_actual < num_filas)
             strcat(buffer, ",");
     }
     mysql_free_result(resultado);
