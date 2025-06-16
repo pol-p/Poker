@@ -313,7 +313,7 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 if (strlen(consulta) > 0) {
                     snprintf(buff_out, sizeof(buff_out), "1/ERROR: el usuario ya existe");
                 } else {
-                    snprintf(buff_cons, MAX_BUFF, "INSERT INTO Jugadores (nombre, email, saldo, passwd) VALUES ('%s', '%s', %f, '%s');", name, email, 5.00, passwd);
+                    snprintf(buff_cons, MAX_BUFF, "INSERT INTO Jugadores (nombre, email, saldo, passwd) VALUES ('%s', '%s', %f, '%s');", name, email, 1000.00, passwd);
                     if (mysql_query(conn, buff_cons)) { 
                         printf("Error al insertar nuevo usuario: %s\n", mysql_error(conn));
                         strcpy(buff_out, "1/ERROR: el usuario no se ha podido crear con exito");
