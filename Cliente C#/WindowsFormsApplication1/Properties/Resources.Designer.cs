@@ -59,5 +59,25 @@ namespace WindowsFormsApplication1.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ChatGPT_Image_16_jun_2025__19_37_36__1_ {
+            get {
+                object obj = ResourceManager.GetObject("ChatGPT Image 16 jun 2025, 19_37_36 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ChatGPT_Image_16_jun_2025__20_00_33 {
+            get {
+                object obj = ResourceManager.GetObject("ChatGPT Image 16 jun 2025, 20_00_33", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

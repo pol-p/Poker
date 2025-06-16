@@ -25,6 +25,41 @@ namespace WindowsFormsApplication1
         public Room()
         {
             InitializeComponent();
+
+
+            foreach (Control ctrl in this.Controls)
+            {
+                // Botones con relieve, fondo blanco y texto negro
+                if (ctrl is System.Windows.Forms.Button btn)
+                {
+                    btn.FlatStyle = FlatStyle.Popup;
+                    btn.BackColor = Color.White;
+                    btn.ForeColor = Color.Black;
+                    btn.Font = new Font("Consolas", 12, FontStyle.Bold);
+                }
+                // Labels
+                else if (ctrl is Label lbl)
+                {
+                    lbl.BackColor = Color.Transparent;
+                    lbl.ForeColor = Color.Gold;
+                    lbl.Font = new Font("Consolas", 12, FontStyle.Bold);
+                }
+                // TextBox del chat (para escribir)
+                else if (ctrl is System.Windows.Forms.TextBox txt)
+                {
+                    txt.BackColor = Color.FromArgb(30, 30, 30);
+                    txt.ForeColor = Color.LimeGreen;
+                    txt.BorderStyle = BorderStyle.FixedSingle;
+                    txt.Font = new Font("Consolas", 12, FontStyle.Bold);
+                }
+                // ListBox del chat (mensajes en rojo)
+                else if (ctrl is ListBox list)
+                {
+                    list.BackColor = Color.FromArgb(30, 30, 30);
+                    list.ForeColor = Color.Red;
+                    list.Font = new Font("Consolas", 12, FontStyle.Bold);
+                }
+            }
         }
 
         private void Room_Load(object sender, EventArgs e)
@@ -121,6 +156,8 @@ namespace WindowsFormsApplication1
                 Btn_turno.Text = "Esperando resultado...";
             }
         }
+
+
         public void set_turno()
         {
             turno = true;
@@ -136,6 +173,12 @@ namespace WindowsFormsApplication1
             lab_ca1_jugador.Text = carta1.ToString();
             lab_ca2_jugador.Text = carta2.ToString();
 
+            // Mostrar imágenes
+            MostrarCarta(pictureBox1_carta1J, carta1);
+            MostrarCarta(pictureBox1_carta2J, carta2);
+
+
+
         }
         public void set_cartas_mesa(string[] ca1)
         {
@@ -150,7 +193,27 @@ namespace WindowsFormsApplication1
             label3.Text = car3;
             label4.Text = car4;
             label5.Text = car5;
+
+            MostrarCarta(pictureBox_mesa1, car1);
+            MostrarCarta(pictureBox_mesa2, car2);
+            MostrarCarta(pictureBox_mesa3, car3);
+            MostrarCarta(pictureBox_mesa4, car4);
+            MostrarCarta(pictureBox_mesa5, car5);
+
             acabado = 1;
         }
+
+        private void MostrarCarta(PictureBox pic, string nombreCarta)
+        {
+            string ruta = System.IO.Path.Combine(Application.StartupPath, "Cartas", nombreCarta + ".png");
+            if (System.IO.File.Exists(ruta))
+                pic.Image = Image.FromFile(ruta);
+            else
+            {
+                pic.Image = null;
+                MessageBox.Show($"No se encontró la imagen: {ruta}");
+            }
+        }
+
     }
 }

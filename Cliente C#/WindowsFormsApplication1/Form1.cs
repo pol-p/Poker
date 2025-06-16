@@ -31,6 +31,57 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
             CheckForIllegalCrossThreadCalls = false;
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl is Button btn)
+                {
+                    btn.FlatStyle = FlatStyle.Flat;
+                    btn.FlatAppearance.BorderSize = 0;
+                    btn.BackColor = Color.Transparent;
+                    btn.ForeColor = Color.Black; // Cambia el color si lo deseas
+                    btn.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+                    btn.ForeColor = Color.White;
+                }
+
+                if (ctrl is TextBox txt)
+                {
+                    txt.BackColor = Color.FromArgb(30, 30, 30); // Fondo oscuro
+                    txt.ForeColor = Color.Red; // Texto verde tipo casino
+                    txt.BorderStyle = BorderStyle.FixedSingle;
+                    txt.Font = new Font("Consolas", 12, FontStyle.Bold); // Fuente tipo casino
+                }
+
+                if (ctrl is MenuStrip menu)
+                {
+                    menu.BackColor = Color.FromArgb(30, 30, 30); // Fondo oscuro
+                    menu.ForeColor = Color.Red; // Texto verde tipo casino
+                    menu.Font = new Font("Consolas", 12, FontStyle.Bold); // Fuente tipo casino
+
+                    // Personaliza los ítems del menú
+                    foreach (ToolStripMenuItem item in menu.Items)
+                    {
+                        item.BackColor = Color.FromArgb(30, 30, 30);
+                        item.ForeColor = Color.Red;
+                        item.Font = new Font("Consolas", 12, FontStyle.Bold);
+                    }
+                }
+                
+                {
+                    if (ctrl is DateTimePicker dtp)
+                    {
+                        dtp.CalendarMonthBackground = Color.FromArgb(30, 30, 30); // Fondo del calendario
+                        dtp.CalendarForeColor = Color.LimeGreen; // Texto del calendario
+                        dtp.CalendarTitleBackColor = Color.DarkGreen; // Fondo del título del calendario
+                        dtp.CalendarTitleForeColor = Color.White; // Texto del título del calendario
+                        dtp.CalendarTrailingForeColor = Color.Gray; // Días de otros meses
+                        dtp.BackColor = Color.FromArgb(30, 30, 30); // Fondo del control
+                        dtp.ForeColor = Color.LimeGreen; // Texto del control
+                        dtp.Font = new Font("Consolas", 12, FontStyle.Bold); // Fuente tipo casino
+                    }
+                }
+
+
+            }
 
         }
 
@@ -546,13 +597,25 @@ namespace WindowsFormsApplication1
                 {
                     server.Connect(ipep);//Intentamos conectar el socket
                     this.BackColor = Color.Green;
-                    MessageBox.Show("Conectado");
+
+                    string ruta = System.IO.Path.Combine(Application.StartupPath, "Monos", "conectado.png");
+                    if (System.IO.File.Exists(ruta))
+                    {
+                        pictureBoxEstado.Image = Image.FromFile(ruta);
+                        pictureBoxEstado.SizeMode = PictureBoxSizeMode.Zoom; // Ajusta la imagen al PictureBox
+                    }
+                    else
+                    {
+                        MessageBox.Show("No se encontró la imagen: " + ruta);
+                    }
 
                     // Inicia el hilo de atención aquí, antes de hacer login
                     conectado = true;
                     ThreadStart ts = delegate { AtenderServidor(); };
                     atender = new Thread(ts);
                     atender.Start();
+
+
                 }
                 catch (SocketException ex)
                 {
@@ -613,6 +676,17 @@ namespace WindowsFormsApplication1
                     MessageBox.Show(ex.ToString());
                 }
 
+                string ruta = System.IO.Path.Combine(Application.StartupPath, "Monos", "desconectado.png");
+                if (System.IO.File.Exists(ruta))
+                {
+                    pictureBoxEstado.Image = Image.FromFile(ruta);
+                    pictureBoxEstado.SizeMode = PictureBoxSizeMode.Zoom; // Ajusta la imagen al PictureBox
+                }
+                else
+                {
+                    MessageBox.Show("No se encontró la imagen: " + ruta);
+                }
+
                 this.BackColor = Color.Gray;
                 conectado = false;
                 
@@ -638,6 +712,12 @@ namespace WindowsFormsApplication1
                     dataGridView1.DataSource = null;
                     dataGridView1.Rows.Clear();
                     dataGridView1.Refresh();
+                });
+
+                this.Invoke((MethodInvoker)delegate {
+                    dataGridView_historial.DataSource = null;
+                    dataGridView_historial.Rows.Clear();
+                    dataGridView_historial.Refresh();
                 });
 
                 // Espera a que el hilo termine antes de cerrar el socket
@@ -913,5 +993,15 @@ namespace WindowsFormsApplication1
                 MessageBox.Show("No estás conectado al servidor.");
             }
         }
+        private void tOP1ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            button2_Click(sender, e);
+        }
+
+        private void listaUsuariosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Users_Click(sender, e);
+        }
+
     }
 }
