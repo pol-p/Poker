@@ -659,16 +659,16 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 // Inicializar y mezclar la baraja
                 inicializar_y_mezclar_baraja(&nroom->baraja);
 
-                // Repartir 2 cartas a cada jugador
-                int carta_actual = 0;
+               // Repartir 2 cartas aleatorias a cada jugador (pueden repetirse)
                 for (unsigned int i = 0; i < nroom->num_players; i++) {
-                    nroom->players[i].mano[0] =  nroom->baraja.cartas[carta_actual++];
-                    nroom->players[i].mano[1] = nroom->baraja.cartas[carta_actual++];
-                    nroom->players[i].vistas = 0; // Inicialmente, ningún jugador ha visto sus cartas
+                    nroom->players[i].mano[0].valor = (rand() % 10) + 1; // 1 a 10
+                    nroom->players[i].mano[1].valor = (rand() % 10) + 1;
+                    nroom->players[i].vistas = 0;
                 }
-                // 5 cartas para la mesa
+
+                // Repartir 5 cartas aleatorias a la mesa (pueden repetirse)
                 for (int i = 0; i < 5; i++) {
-                    nroom->mesa[i] = nroom->baraja.cartas[carta_actual++];
+                    nroom->mesa[i].valor = (rand() % 10) + 1;
                 }
                 // Notificar a los clientes de la sala usando la función enviar_mensaje_a_sala
                 char mensaje[MAX_BUFF];
@@ -1292,50 +1292,46 @@ int calcular_ganador(Room* sala) {
     int ganador = -1;
 
     for (unsigned int i = 0; i < sala->num_players; i++) {
-        // 1. Buscar la mejor pareja del jugador
-        int max_pareja = -1;
-        // Combinaciones de mano con mesa
-        for (int m = 0; m < 2; m++) {
-            for (int c = 0; c < 5; c++) {
-                if (sala->players[i].mano[m].valor == sala->mesa[c].valor) {
-                    if (sala->players[i].mano[m].valor > max_pareja)
-                        max_pareja = sala->players[i].mano[m].valor;
-                }
-            }
-        }
-        // Combinación entre las dos cartas de la mano
-        if (sala->players[i].mano[0].valor == sala->players[i].mano[1].valor) {
-            if (sala->players[i].mano[0].valor > max_pareja)
-                max_pareja = sala->players[i].mano[0].valor;
-        }
-        // Combinaciones entre cartas de la mesa
-        for (int c1 = 0; c1 < 5; c1++) {
-            for (int c2 = c1 + 1; c2 < 5; c2++) {
-                if (sala->mesa[c1].valor == sala->mesa[c2].valor) {
-                    if (sala->mesa[c1].valor > max_pareja)
-                        max_pareja = sala->mesa[c1].valor;
-                }
+        // Construir un array con las 7 cartas del jugador (2 mano + 5 mesa)
+        int cartas[7];
+        cartas[0] = sala->players[i].mano[0].valor;
+        cartas[1] = sala->players[i].mano[1].valor;
+        for (int j = 0; j < 5; j++)
+            cartas[2 + j] = sala->mesa[j].valor;
+
+        // Contar ocurrencias de cada valor (del 1 al 10)
+        int cuenta[11] = {0}; // cuenta[1]...cuenta[10]
+        for (int j = 0; j < 7; j++)
+            cuenta[cartas[j]]++;
+
+        int mejor = 0; // 4 = poker, 3 = trio, 2 = pareja, 1 = carta alta
+        int valor = 0; // valor de la jugada
+
+        // Buscar póker, trío, pareja
+        for (int v = 10; v >= 1; v--) {
+            if (cuenta[v] == 4 && mejor < 4) {
+                mejor = 4;
+                valor = v;
+                break; // Póker es lo máximo, no hace falta seguir
+            } else if (cuenta[v] == 3 && mejor < 3) {
+                mejor = 3;
+                valor = v;
+            } else if (cuenta[v] == 2 && mejor < 2) {
+                mejor = 2;
+                valor = v;
+            } else if (cuenta[v] >= 1 && mejor < 1) {
+                mejor = 1;
+                valor = v;
             }
         }
 
-        int puntaje = 0;
-        if (max_pareja != -1) {
-            // Si tiene pareja, el puntaje es 100 + valor de la pareja
-            puntaje = 100 + max_pareja;
-        } else {
-            // Si no, la carta más alta entre mano y mesa
-            int max_carta = sala->players[i].mano[0].valor > sala->players[i].mano[1].valor ?
-                            sala->players[i].mano[0].valor : sala->players[i].mano[1].valor;
-            for (int c = 0; c < 5; c++)
-                if (sala->mesa[c].valor > max_carta)
-                    max_carta = sala->mesa[c].valor;
-            puntaje = max_carta;
-        }
+        // Calcula el puntaje: mayor prioridad a póker, luego trío, luego pareja, luego carta alta
+        int puntaje = mejor * 100 + valor;
 
         if (puntaje > mejor_puntaje) {
             mejor_puntaje = puntaje;
             ganador = i;
         }
     }
-    return ganador; // Devuelve el índice del jugador ganador
+    return ganador;
 }
