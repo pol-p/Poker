@@ -15,7 +15,7 @@
 
 #define MAX_BUFF 1024
 #define MAX_SIZE 1024 
-#define PORT 50042
+#define PORT 50043
 #define HOST "localhost"
 #define USUARIO "usr"
 #define PASSWD "1234"
@@ -66,6 +66,8 @@ typedef struct {
     int cartas_vistas;      // Contador de jugadores que han visto sus cartas
     char nombre_ganador[20]; // Nombre de la sala
     int num_players_iniciado;
+    int partida_id; // ID de la partida en la base de datos
+    int jugadores_fuera; // Añade esto en tu struct Room
 } Room;
 
 // Estructura para manejar la lista de salas
@@ -559,6 +561,10 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                     snprintf(buff_cons, MAX_BUFF, "12/%d/%d", room, capacity);
                     strcpy(buff_out, buff_cons);
                 }
+
+                char mensaje[MAX_BUFF];
+                    snprintf(mensaje, sizeof(mensaje), "23/%d", room);
+                    write(sock_conn, mensaje, strlen(mensaje));
             }
     
             break;
@@ -634,15 +640,16 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
 
                 // Obtener el id de la última partida insertada
                 MYSQL_RES *res = mysql_store_result(conn);
-                int partida_id = (int)mysql_insert_id(conn);
 
                 // Insertar participaciones
                 Room *nroom = &list_rooms.rooms[room - 1];
+                nroom->jugadores_fuera = 0;
+                nroom->partida_id = (int)mysql_insert_id(conn);
                 nroom->cartas_vistas = 0;
                 for (unsigned int i = 0; i < nroom->num_players; i++) {
                     sprintf(consulta,
                         "INSERT INTO Participaciones (partida_id, jugador, resultado) VALUES (%d, '%s', NULL)",
-                        partida_id, nroom->players[i].name);
+                        nroom->partida_id, nroom->players[i].name);
                     ejecutar_consulta(conn, consulta, buff_out, &error);
                 }
 
@@ -667,17 +674,19 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 char mensaje[MAX_BUFF];
                 snprintf(mensaje, sizeof(mensaje), "15/%d/Partida iniciada por %s", room, client->name);
                 enviar_mensaje_a_sala(room - 1, mensaje);
-
+                usleep(50000); // Espera 50 ms
                 snprintf(buff_out, sizeof(buff_out), "1/La sala %d tiene suficientes jugadores para iniciar la partida", room);
                 
                 nroom->players[0].vistas = 1; // El primer jugador que entra es el primero en jugar
 
                 char buff_con[MAX_BUFF];
-                snprintf(buff_con, sizeof(buff_con), "21/%d", room);
+                snprintf(buff_con, sizeof(buff_con), "21/%d/\n", room);
                 if (write(nroom->players[0].sock_conn, buff_con, strlen(buff_con)) < 0) {
                     perror("Error al escribir en el socket");
                     return 1;
                 }
+                usleep(100000); // Espera 50 ms
+
                 //////
                 int ganador = calcular_ganador(nroom);
                 strcpy (nroom->nombre_ganador, nroom->players[ganador].name); 
@@ -837,7 +846,22 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 sala->mesa[0].valor, sala->mesa[1].valor, sala->mesa[2].valor,
                 sala->mesa[3].valor, sala->mesa[4].valor);
                 enviar_mensaje_a_sala(room - 1, msg);
-               
+                usleep(50000); // Espera 50 ms
+
+                //Actualizar mysql 
+                for (unsigned int i = 0; i < sala->num_players_iniciado; i++) {
+                char consulta_sql[MAX_BUFF];
+                if (strcmp(sala->players[i].name, sala->nombre_ganador) == 0) {
+                    snprintf(consulta_sql, sizeof(consulta_sql),
+                        "UPDATE Participaciones SET resultado = 'Ganador' WHERE partida_id = %d AND jugador = '%s'",
+                        sala->partida_id, sala->players[i].name);
+                } else {
+                    snprintf(consulta_sql, sizeof(consulta_sql),
+                        "UPDATE Participaciones SET resultado = 'Perdedor' WHERE partida_id = %d AND jugador = '%s'",
+                        sala->partida_id, sala->players[i].name);
+                }
+                mysql_query(conn, consulta_sql);
+                }          
             }
             break;
         }
@@ -850,17 +874,39 @@ int handle_client_request(int sock_conn, char *buff_in, MYSQL *conn, ClientInfo 
                 }
                 int room = atoi(token);
                 Room* sala = &list_rooms.rooms[room - 1];
-                sala->iniciada = 0;
-                sala->cartas_vistas = 0; // Reiniciar contador de cartas vistas
+                sala->jugadores_fuera++;
+
                 snprintf(buff_out, sizeof(buff_out), "22/%d/%s/%d", room, sala->nombre_ganador, precios_sala[room - 1] * sala->num_players_iniciado);
                 // Actualizar saldo del ganador en la base de datos
                 char consulta_sql[MAX_BUFF];
                 snprintf(consulta_sql, sizeof(consulta_sql),
-                    "UPDATE Jugadores SET saldo = saldo + %d WHERE nombre = '%s'", precios_sala[room - 1] * sala->num_players_iniciado, sala->nombre_ganador);
+                    "UPDATE Jugadores SET saldo = saldo + %d WHERE nombre = '%s'", precios_sala[room - 1], sala->nombre_ganador);
                 if (mysql_query(conn, consulta_sql) != 0) {
                     strcpy(buff_out, "1/ERROR, No se pudo actualizar el saldo del ganador");
                     break;
                 }
+
+                if (sala->jugadores_fuera >= sala->num_players_iniciado) {
+                    sala->iniciada = 0;
+                    sala->cartas_vistas = 0;
+                    sala->jugadores_fuera = 0; // (opcional, para la próxima partida)
+                    // Mensaje para cerrar la sala en el cliente
+
+                    //Limpieza de la sala
+                    sala->num_players = 0;
+                    sala->num_players_iniciado = 0;
+                    sala->partida_id = 0;
+                    sala->nombre_ganador[0] = '\0';
+                    // Limpia el array de jugadores
+                    for (int i = 0; i < 4; i++) {
+                        sala->players[i].name[0] = '\0';
+                        sala->players[i].sock_conn = 0;
+                        sala->players[i].mano[0].valor = 0;
+                        sala->players[i].mano[1].valor = 0;
+                        sala->players[i].vistas = 0;
+                    }
+                }
+
             break;
         }
         
