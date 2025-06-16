@@ -21,7 +21,7 @@ namespace WindowsFormsApplication1
         List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 50042;
+        int PORT = 50043;
         bool conectado = false;
         int room_num;
         bool aceptar;
@@ -492,6 +492,22 @@ namespace WindowsFormsApplication1
                                         //romms.FirstOrDefault(room => room.getnumroom() == numero_room).set_turno();
                                         break;
                                 }
+                            }
+                            break;
+
+                        case 23: //Eliminar room
+                            {
+                                
+                                int numRoomEliminar = int.Parse(trozos[1]);
+                                var roomAEliminar = romms.FirstOrDefault(r => r.getnumroom() == numRoomEliminar);
+                                if (roomAEliminar != null)
+                                {
+                                    this.Invoke((MethodInvoker)delegate {
+                                        roomAEliminar.Close();
+                                    });
+                                    romms.Remove(roomAEliminar);
+                                }
+
                             }
                             break;
 
