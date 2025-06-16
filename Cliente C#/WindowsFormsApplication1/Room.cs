@@ -15,6 +15,7 @@ namespace WindowsFormsApplication1
 {
     public partial class Room : Form
     {
+        int acabado = 0; // Variable para controlar el estado del juego
         int num_room;
         Socket serverform;
         bool turno = false; // Variable para controlar el turno
@@ -43,6 +44,17 @@ namespace WindowsFormsApplication1
             MessageBox.Show(mensaje);
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             serverform.Send(msg);
+
+            System.Threading.Thread.Sleep(10); // Pausa de 10 ms
+
+            if (acabado == 1)
+            {
+                mensaje = $"17/{num_room}";
+                MessageBox.Show(mensaje);
+                msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                serverform.Send(msg);
+            }
+
             this.Close();
         }
 
@@ -138,6 +150,7 @@ namespace WindowsFormsApplication1
             label3.Text = car3;
             label4.Text = car4;
             label5.Text = car5;
+            acabado = 1;
         }
     }
 }
