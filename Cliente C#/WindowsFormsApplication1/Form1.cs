@@ -21,7 +21,7 @@ namespace WindowsFormsApplication1
         List<Room> romms = new List<Room>();
         Socket server;
         Thread atender;
-        int PORT = 50043;
+        int PORT = 50044;
         bool conectado = false;
         int room_num;
         bool aceptar;
@@ -588,7 +588,7 @@ namespace WindowsFormsApplication1
         {
             {
                 //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
-                IPAddress direc = IPAddress.Parse("172.23.240.236");
+                IPAddress direc = IPAddress.Parse("10.4.119.5");
                 IPEndPoint ipep = new IPEndPoint(direc, PORT);
 
                 //Creamos el socket 
