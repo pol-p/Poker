@@ -115,18 +115,18 @@ namespace WindowsFormsApplication1
 
                     switch (codigo)
                     {
-                        case 0:
+                        case 0: //Desconexion
                             // Mensaje de desconexión del servidor
                             MessageBox.Show(mensaje); // Mostrará "Saliendo..."
                             conectado = false;
                             break;
 
-                        case 1: //Respuesta del servidor a la longitud de nombre (codigo1).
+                        case 1: // Case para el Login: procesa la respuesta de login del servidor
 
                             MessageBox.Show(mensaje);
                             break;
 
-                        case 2: //Respuesta del servidor a si mi nombre es bonito (codigo2).
+                        case 2: // Case para el Registro: procesa la respuesta de registro del servidor
 
                             MessageBox.Show(mensaje.Split('\0')[0]);
                             if (mensaje.Split('\0')[0] == "1")
@@ -136,23 +136,24 @@ namespace WindowsFormsApplication1
                             }
                             break;
 
-                        case 3: //Respuesta del servidor a si soy alto o no (codigo3)
+                        case 3: // Case para Desconexión: el servidor indica que se debe cerrar la sesión
 
                             MessageBox.Show(mensaje);
                             break;
 
-                        case 4: //Respuesta del servidor a la longitud de nombre (codigo1).
+                        case 4: // Case para Mensaje de chat: muestra un mensaje recibido en el chat
 
                             MessageBox.Show(mensaje);
                             break;
 
-                        case 5: //Respuesta del servidor a si mi nombre es bonito (codigo2).
+                        case 5:  //Solicitud de la lista de usuarios actualmente conectados.
+
 
                             MessageBox.Show(mensaje);
 
                             break;
 
-                        case 6: //Respuesta del servidor a si soy alto o no (codigo3)
+                        case 6: //Invitación para jugar: el cliente invita a otro usuario.
 
                             MessageBox.Show(mensaje);
                             break;
@@ -193,7 +194,7 @@ namespace WindowsFormsApplication1
                             break;
 
                         case 10:
-                            // Se recibe tipo numGente/numSala/nombre1/nombre2.../balanceDeLaPersona
+                            // Envío de un mensaje de chat dentro de la sala.
                             MessageBox.Show(mensaje);
                             int numRoom = Convert.ToInt32(mensaje);
                             int numPersonas = Convert.ToInt32(trozos[2].Split('\0')[0]);
@@ -332,7 +333,7 @@ namespace WindowsFormsApplication1
                             }
                             break;
 
-                        case 16:
+                        case 16: //Consultar historial de partidas entre dos fechas para el usuario.
                             if (trozos[1] == "2")
                             {
                                 string[] partidas = trozos[2].Split(','); // Cada partida separada por ';'
@@ -368,7 +369,7 @@ namespace WindowsFormsApplication1
                             }
                             break;
 
-                        case 17:
+                        case 17: //Historial de partidas jugadas con otro jugador concreto.
                             if (trozos[1] == "2")
                             {
                                 string[] partidas = trozos[2].Split(','); // Cada partida separada por ';'
@@ -405,7 +406,7 @@ namespace WindowsFormsApplication1
                             }
                             break;
 
-                        case 18:
+                        case 18: //Lista de todos los jugadores con los que has jugado alguna vez.
                             if (trozos[1] == "2")
                             {
                                 DataTable dts = new DataTable();
@@ -438,7 +439,7 @@ namespace WindowsFormsApplication1
                             }
                             break;
 
-                        case 19: //Par de cartas de cada jugador
+                        case 19: // Mostrar mano de cada jugador en la sala (revelación de cartas).
                             {
                                 numero_room = Convert.ToInt32(trozos[1]);
                                 MessageBox.Show("" + numero_room);
@@ -524,7 +525,7 @@ namespace WindowsFormsApplication1
                                 }
                             }
                             break;
-                        case 22: //Acabar Partida mas ganador
+                        case 22: //Fin de partida: anuncia ganador, actualiza saldos y limpia la sala.
                             {
                                 numero_room = Convert.ToInt32(trozos[1]);
                                 MessageBox.Show("" + numero_room);
