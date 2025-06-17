@@ -15,11 +15,11 @@
 
 #define MAX_BUFF 1024
 #define MAX_SIZE 1024 
-#define PORT 50043
-#define HOST "localhost"
-#define USUARIO "usr"
-#define PASSWD "1234"
-#define DATABASE "Poker"
+#define PORT 50044
+#define HOST "shiva2.upc.es"
+#define USUARIO "root"
+#define PASSWD "mysql"
+#define DATABASE "M9_Poker"
 
 // Estructura para almacenar informacion de cada cliente
 typedef struct {
